@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <title>Ashfall</title>
+    <!-- the b= numbers are stamped by scripts/build-web.ps1 so browsers fetch new files after a deploy -->
+    <link rel="stylesheet" href="style.css?b=202610212028">
+  </head>
+  <body>
+    <header id="topbar">
+      <span id="brand">Ashfall</span>
+      <div id="menuWrap">
+        <button id="menuButton" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="menuPanel">
+          <span class="bars" aria-hidden="true"><span class="bar"></span><span class="bar"></span><span class="bar"></span></span>
+          <span class="label">Menu</span>
+          <span id="menuDot" title="Wallet connected" hidden></span>
+        </button>
+        <div id="menuPanel" role="dialog" aria-label="Menu" hidden>
+          <div class="menu-label">WALLET</div>
+          <div id="menuWalletStatus">Not connected</div>
+          <div id="menuNetwork" class="network" hidden><span class="network-dot"></span><span id="menuNetworkName"></span></div>
+          <button id="menuConnect" class="menu-action" type="button">Connect wallet</button>
+          <button id="menuSwitch" class="menu-action" type="button" hidden>Switch to Hemi</button>
+          <button id="menuDisconnect" class="menu-secondary" type="button" hidden>Disconnect</button>
+          <div id="menuNote" class="note"></div>
+          <div class="menu-help">Trade your gold for HEMI with Nova at the Hemi Exchange stall in Willowbrook.</div>
+        </div>
+      </div>
+    </header>
+    <main id="stage">
+      <canvas id="canvas" aria-label="Ashfall game" tabindex="0"></canvas>
+    </main>
+    <div id="spinner" class="pending" aria-live="polite">Loading game</div>
+    <script src="bridge.js?b=202610212028"></script>
+    <script src="menu.js?b=202610212028"></script>
+    <script src="player.js?g=game.love&amp;v=11.5&amp;n=1&amp;b=202610212028"></script>
+  </body>
+</html>

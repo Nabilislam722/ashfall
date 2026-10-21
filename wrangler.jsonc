@@ -1,0 +1,50 @@
+{
+  "$schema": "https://developers.cloudflare.com/workers/wrangler/config-schema.json",
+  "name": "ashfall",
+  "main": "cloudflare/worker.js",
+  "compatibility_date": "2026-09-24",
+  "assets": {
+    "directory": "./web",
+    "binding": "ASSETS"
+  },
+
+  // local play: `npx wrangler dev` serves the game at http://localhost:8001/
+  "dev": { "port": 8001 },
+
+  // The exchange ledger: one Durable Object keeps every balance, so exchanges
+  // are checked and booked one at a time (cloudflare/ledger.js). Wrangler
+  // creates it on deploy; nothing to set up by hand.
+  "durable_objects": {
+    "bindings": [{ "name": "LEDGER", "class_name": "ExchangeLedger" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["ExchangeLedger"] }],
+
+  // Hemi features (see docs/hemi-rewards.md): 10 gold = 1 HEMI on Hemi mainnet
+  // (chain 43111, gas paid in ETH), on-chain saves, and veHEMI staking at the
+  // Mana Well. On-chain saves work as soon as SAVES_CONTRACT is set. The
+  // exchange stays closed until REWARDS_CONTRACT, SAVES_CONTRACT and the
+  // SIGNER_PRIVATE_KEY secret are all set.
+  "vars": {
+    "HEMI_CHAIN_ID": "43111",
+    // addresses printed by contracts/script/Deploy.s.sol
+    "REWARDS_CONTRACT": "0xf57caa7b57ed157aF9441Df791fAcbb1d3404739",
+    "SAVES_CONTRACT": "0x9962D63Adc2Ece94F9b7bb1941579EA43f3f77D6",
+    // HEMI on Hemi mainnet
+    "REWARD_TOKEN": "0x99e3dE3817F6081B2568208337ef83295b7f591D",
+    "REWARD_TOKEN_SYMBOL": "HEMI",
+    "REWARD_TOKEN_DECIMALS": "18",
+    "GOLD_PER_TOKEN": "10",
+    // at most 50 HEMI per wallet, ever
+    "WALLET_CAP_GOLD": "500",
+    // at most 2,000 HEMI per UTC day, all wallets together
+    "DAILY_CAP_GOLD": "20000",
+    // one journey (run) can exchange at most 200 gold (more than a run can earn),
+    // unlocking at 10 gold per minute from the run's on-chain start
+    "RUN_GOLD_LIMIT": "200",
+    "GOLD_PER_MINUTE": "10",
+    // official veHemi (staking) contract on Hemi mainnet
+    "VEHEMI_CONTRACT": "0x371d3718D5b7F75EAb050FAe6Da7DF3092031c89",
+    "VOUCHER_TTL_SECONDS": "900"
+  }
+
+}

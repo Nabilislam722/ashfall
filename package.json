@@ -1,0 +1,19 @@
+{
+  "name": "ashfall",
+  "private": true,
+  "type": "module",
+  "description": "Web tooling for Ashfall: Hemi rewards contract, Cloudflare Worker API.",
+  "scripts": {
+    "contracts:build": "forge build --root contracts",
+    "contracts:test": "forge test --root contracts -vv",
+    "build:web": "pwsh -File scripts/build-web.ps1",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "viem": "^2.57.3"
+  },
+  "devDependencies": {
+    "@openzeppelin/contracts": "^5.6.1",
+    "wrangler": "^4.149.0"
+  }
+}
