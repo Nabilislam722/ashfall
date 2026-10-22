@@ -1,0 +1,15 @@
+# secrets and local config
+.env
+.env.*
+.dev.vars
+*.key
+
+# node / wrangler
+node_modules/
+.wrangler/
+
+# foundry
+contracts/out/
+contracts/cache/
+contracts/lib/
+contracts/broadcast/
