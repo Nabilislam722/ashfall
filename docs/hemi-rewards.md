@@ -150,7 +150,7 @@ transactions from their wallet to the official veHemi contract: `approve`, then
 veHEMI is about `amount × lock / 4 years` and fades as the unlock date nears.
 
 The player has one mana pool, shared by the fireball (E, 20 mana), the
-Shift+click flame (10 mana) and the Storm Staff (releases everything in the
+R flame (10 mana) and the Storm Staff (releases everything in the
 pool). It refills slowly on its own (4 mana per second, a little more with a
 bigger pool, after a 1.2 second pause) and much faster while the staff is held.
 Its capacity is

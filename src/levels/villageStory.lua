@@ -435,7 +435,7 @@ function villageStory:teachShadowStep(juan)
         player.shadowCooldown = 0
         player:gotItem(sprites.items.shadowStep)
         dj.play(sounds.items.chest, "static", "effect")
-        showToast("Learned Shadow Step!  Press Q to dash through danger", 4.5)
+        showToast("Learned Shadow Step!  Press Space to dash through danger", 4.5)
         objective = currentObjective()
     end)
 end
@@ -1003,7 +1003,11 @@ end
 function villageStory:update(dt)
     if not self.active or pause.active then return end
 
-    if self.rick then self.rick:update(dt) end
+    local rick = self.rick
+    if rick then
+        rick:update(combat:slowIn(rick, dt)) -- (slowed for a while when dodged perfectly)
+        combat:slowOut(rick)
+    end
 
     -- while his story goes on, Rick wants to talk; afterwards he trades snacks
     local rickNpc = npcs:find("Rick")

@@ -86,5 +86,6 @@ function requireAll()
     require("src/ui/minimap")
     require("src/ui/vsBanner")
     require("src/ui/domainExpansion")
+    require("src/ui/intro")
 
 end

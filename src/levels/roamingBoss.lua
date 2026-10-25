@@ -81,7 +81,8 @@ function roamingBoss:update(dt)
     if self.redFlash > 0 then self.redFlash = math.max(0, self.redFlash - dt * 1.5) end
     local lord = self.lord
     if not lord then return end
-    lord:update(dt)
+    lord:update(combat:slowIn(lord, dt)) -- (slowed for a while when dodged perfectly)
+    combat:slowOut(lord)
     if not self.lord then return end -- he fell this frame
     if self.fighting then
         -- keep him in frame while he fights

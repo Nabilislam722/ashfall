@@ -104,7 +104,12 @@ function menu:startNewGame()
     startFresh(1)
     dj.play(sounds.ui.select, "static", "effect")
     self.startedFrom = "new"
-    curtain:call(data.map, data.playerX, data.playerY, "fade")
+    -- a new journey opens with the intro (src/ui/intro.lua); it ends on black,
+    -- so the curtain starts closed
+    intro:play(function()
+        curtain:call(data.map, data.playerX, data.playerY, "fade")
+        curtain.alpha = 1
+    end)
 end
 
 function menu:newGame()
@@ -317,10 +322,10 @@ function menu:draw()
     -- controls
     love.graphics.setFont(fonts.menuSmall)
     local lines = {
-        "WASD / arrows: move     Space: roll     Shift: dodge     Mouse: aim and attack",
-        "E: talk, trade, save at checkpoints, or Fireball (hold to charge)     Tab: items     Q: Shadow Step (once learned)",
+        "WASD / arrows: move     Mouse: aim and attack     Shift: roll     Space: Shadow Step (once learned)",
+        "E: talk, trade, save at checkpoints, or Fireball (hold to charge)     R: flame     Tab: items",
         "M: menu and wallet     N: minimap     + / - or wheel: zoom     F3: free roam",
-        "Swing into a blow on its white glint to clash it     Roll or dodge right as one lands: perfect dodge",
+        "Swing into a blow on its white glint to clash it     Roll or Shadow Step right as one lands: perfect dodge (it slows the attacker)",
         web and "Up / Down and Enter to choose" or "Up / Down and Enter to choose     Backspace: fullscreen     Esc: quit",
     }
     local ly = h - (#lines * fonts.menuSmall:getHeight()) - 8 * scale

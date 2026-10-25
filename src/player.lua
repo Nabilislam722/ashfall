@@ -38,12 +38,15 @@ player.afterimages = {} -- fading silhouettes left behind by Shadow Step (and th
 player.stamina = 100 -- spent by dodging, rolling and Shadow Step; it comes back on its own
 player.staminaMax = 100
 player.staminaDelay = 0 -- a moment after spending it, before it starts coming back
-player.dodging = false -- the Shift dodge's dash (player.state 0.5, like a roll)
+player.dodging = false -- the dodge's dash (player.state 0.5, like a roll)
 player.dodgeInvuln = 0 -- untouchable while dodging
 player.dodgeCooldown = 0
 player.afterimageTimer = 0
-player.shiftTap = nil -- Shift held: { t = when it went down, clicked = a click came meanwhile }
 player.parryTimer = 0 -- a swing's first moment parries a blow (src/utilities/combat.lua)
+player.swingLunge = false -- this swing's wind-up lunges at the cursor (nothing in reach)
+player.stepBackTimer = 0 -- stepping back from a cut that landed (or a clash): player:stepBack
+player.stepBackTime = 0
+player.stepBackVec = nil
 player.evadeStart = -10 -- when the last roll, dodge or Shadow Step began (a perfect dodge is right after)
 player.perfectUsed = false
 
@@ -92,6 +95,18 @@ player.buffer = {} -- input buffer
 local STAMINA_REGEN = 45  -- stamina back per second...
 local STAMINA_DELAY = 0.5 -- ...from this long after it was last spent
 local DODGE_STAMINA, ROLL_STAMINA, SHADOW_STAMINA = 22, 14, 30
+local SWING_WALK = 0.85   -- walking through a sword swing: this much of the walking speed
+local STEP_BACK_SPEED, STEP_BACK_TIME = 160, 0.1 -- a cut that lands: the hero steps back about 8 px
+
+-- the way the movement keys point: -1, 0 or 1 on each axis
+function player:moveInput()
+    local dirX, dirY = 0, 0
+    if love.keyboard.isDown("d") or love.keyboard.isDown("right") then dirX = 1 end
+    if love.keyboard.isDown("a") or love.keyboard.isDown("left") then dirX = -1 end
+    if love.keyboard.isDown("s") or love.keyboard.isDown("down") then dirY = 1 end
+    if love.keyboard.isDown("w") or love.keyboard.isDown("up") then dirY = -1 end
+    return dirX, dirY
+end
 
 -- spends stamina on a move; without enough, the move doesn't happen
 function player:useStamina(cost)
@@ -340,9 +355,27 @@ function player:update(dt)
         player.animTimer = player.animTimer - dt
         player:checkDamage()
 
-        if player.state == 1 then
+        -- walking carries on through a swing (a little slower, still facing the
+        -- cut); standing still, the wind-up lunges at the cursor (unless there's
+        -- a monster in reach) and the follow-through holds its ground
+        local dirX, dirY = player:moveInput()
+        if player.stepBackTimer > 0 then
+            -- a cut that landed (or a clash): the hero steps back, easing to a stop
+            player.stepBackTimer = math.max(0, player.stepBackTimer - dt)
+            player:setLinearVelocity((player.stepBackVec * (player.stepBackTimer / player.stepBackTime)):unpack())
+        elseif (dirX ~= 0 or dirY ~= 0) and not pause.active then
+            local vec = vector(dirX, dirY):normalized()
+            player:setLinearVelocity((vec * player.speed * SWING_WALK):unpack())
+            -- the legs keep stepping under the swing (its frames are the walk's), kicking up dust
+            player.anim:update(dt)
+            player.dustTimer = player.dustTimer - dt
+            if player.dustTimer < 0 then
+                player.dustTimer = 0.22
+                effects:spawn("walkDust", player:getX(), player:getY()+6, {dir = vec})
+            end
+        elseif player.state == 1 and player.swingLunge then
             player:setLinearVelocity((player.attackDir*90):unpack())
-        elseif player.state == 1.1 then
+        else
             player:setLinearVelocity(0, 0)
         end
 
@@ -539,7 +572,7 @@ function player:checkDamage()
     if #hitEnemies > 0 then
         local e = hitEnemies[1]
         if e.parent.dizzyTimer <= 0 and e.parent.stunTimer <= 0 and not e.parent.noContactDamage then
-            player:hurt(0.5, e:getX(), e:getY(), e.parent.boss)
+            player:hurt(0.5, e:getX(), e:getY(), e.parent.boss, e.parent)
         end
     end
 
@@ -571,11 +604,11 @@ end
 
 -- boss: a hit from Rick or Gula staggers the hero, knocking them out of whatever
 -- they were doing (a swing, a charge, aiming the bow). Anything else only hurts:
--- the weapon stays in hand
-function player:hurt(damage, srcX, srcY, boss)
+-- the weapon stays in hand. attacker: who it was, when that's known
+function player:hurt(damage, srcX, srcY, boss, attacker)
     if player.damagedTimer > 0 or godMode then return end
     if player:evading() then
-        combat:evaded(srcX, srcY)
+        combat:evaded(srcX, srcY, attacker)
         return
     end
     player.damagedTimer = 2
@@ -604,6 +637,10 @@ function player:swingSword()
     player.attackDir = toMouseVector(player:getX(), player:getY())
     player.parryTimer = combat.PARRY_WINDOW
     player:setDirFromVector(player.attackDir)
+    -- swung at the air, the wind-up lunges forward; with a monster in reach it
+    -- holds, and a cut that lands steps back instead
+    player.swingLunge = #world:queryCircleArea(player:getX(), player:getY(), 24 * player.swordReach, {'Enemy'}) == 0
+    player.stepBackTimer = 0
 
     player.state = 1
 
@@ -625,6 +662,15 @@ function player:swingSword()
     -- animTimer for sword wind-up
     player.animTimer = 0.075
 
+end
+
+-- the hero steps back along `dir`, easing to a stop over `time` (during a
+-- swing: after a cut that landed, or a clash)
+function player:stepBack(dir, speed, time)
+    player.stepBackVec = dir:normalized() * (speed or STEP_BACK_SPEED)
+    player.stepBackTime = time or STEP_BACK_TIME
+    player.stepBackTimer = player.stepBackTime
+    player:setLinearVelocity(player.stepBackVec:unpack())
 end
 
 function player:swordDamage()
@@ -664,23 +710,27 @@ function player:swordDamage()
     local range = math.random()/4
     dj.play(sounds.items.sword, "static", "effect", 1, 1+range)
 
-    -- a monster caught mid-strike clashes instead of being cut; after a clash or a
-    -- perfect dodge, the cut is a counter (double damage)
-    local power, counter = combat:cutPower(player.swordPower)
+    -- a monster caught mid-strike clashes instead of being cut; the cut right
+    -- after a clash, and every cut on a monster slowed by a perfect dodge, is a
+    -- counter (bonus damage)
     local hitEnemies = world:queryPolygonArea(polygon, {'Enemy'})
+    local cut = false
     for _,e in ipairs(hitEnemies) do
         local target = e.parent
         if target and target.striking and target:striking() then
             combat:clash(target, e:getX(), e:getY())
         elseif target then
+            local power, counter = combat:cutPower(player.swordPower, target)
             local knockbackDir = getPlayerToSelfVector(e:getX(), e:getY())
             target:hit(power, knockbackDir, 0.1)
             if counter then
                 combat:countered(e:getX(), e:getY())
-                counter = false
             end
+            cut = true
         end
     end
+    -- it landed: the hero steps back from the cut (a clash has pushed them back already)
+    if cut and player.stepBackTimer <= 0 then player:stepBack(player.attackDir * -1) end
 end
 
 function player:useItem(duration)
@@ -917,7 +967,7 @@ local DODGE_TIME = 0.18     -- the dash lasts this long (about 40 px)...
 local DODGE_INVULN = 0.24   -- ...and nothing can touch you for a moment longer
 local DODGE_COOLDOWN = 0.5
 
--- Shift (a tap: see love.keyreleased): a quick dash that nothing can touch,
+-- The dodge (on no key for now: Shift rolls, Space Shadow Steps): a quick dash that nothing can touch,
 -- monsters, their shots and Rick's and Gula's attacks alike. It goes the way
 -- you are moving, or straight back from the cursor when you stand still (still
 -- facing it). Walls stop it. It cuts a swing short, wind-up or follow-through.
@@ -972,7 +1022,11 @@ local SHADOW_INVULN = 0.35
 -- Shadow Step (taught by Master Juan): blink a short distance through enemies
 -- and their attacks. Stops before walls, water and villagers.
 function player:shadowStep()
-    if not data.skills.shadowStep or isPlayerFrozen() or pause.active then return end
+    if isPlayerFrozen() or pause.active then return end
+    if not data.skills.shadowStep then
+        player:outOfAmmo("Master Juan can teach you the Shadow Step")
+        return
+    end
     if player.state ~= 0 and player.state ~= 0.5 then return end
     if player.shadowCooldown > 0 then return end
 

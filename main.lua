@@ -16,11 +16,19 @@ function love.load()
 end
 
 function love.update(dt)
-    combat:updateReal(dt) -- a perfect dodge slows the world for a moment (src/utilities/combat.lua)
-    updateAll(dt * devTools:timeScale() * combat:timeScale())
+    -- a button let go while the window wasn't looking still counts as up
+    for b, held in pairs(mouseHeld) do
+        if held and not love.mouse.isDown(b) then mouseHeld[b] = false end
+    end
+    intro:update(dt) -- the New Game intro, and its music fading on into the game (src/ui/intro.lua)
+    updateAll(dt * devTools:timeScale())
 end
 
 function love.draw()
+    if intro.active then
+        intro:draw()
+        return
+    end
     drawBeforeCamera()
 
     cam:attach()
@@ -34,7 +42,14 @@ function love.draw()
     --debug:single()
 end
 
-function love.keypressed(key)
+-- a key held down sends repeats on some platforms (and the browser): only a fresh press acts
+function love.keypressed(key, scancode, isrepeat)
+    if isrepeat then return end
+    -- any key skips the intro
+    if intro.active then
+        intro:skip()
+        return
+    end
     -- F3: the developer panel (and, while it's open, its number keys)
     if devTools:keypressed(key) then
         return
@@ -83,13 +98,17 @@ function love.keypressed(key)
             minimap.visible = not minimap.visible
             return
         end
-        if key == 'q' then
+        -- Space (or Q): Shadow Step. Left Shift: roll. R: the flame
+        if key == 'space' or key == 'q' then
             player:shadowStep()
             return
         end
         if key == 'lshift' or key == 'rshift' then
-            -- a tap dodges when it is let go; held, it turns clicks into the flame
-            player.shiftTap = { t = love.timer.getTime(), clicked = false }
+            player:roll()
+            return
+        end
+        if key == 'r' then
+            useItem('altL')
             return
         end
     end
@@ -140,9 +159,6 @@ function love.keypressed(key)
         end
     end
 
-    if key == 'space' then
-        player:roll()
-    end
 
     if key == '+' or key == '=' then
         setZoomLevel(zoomLevel + 0.1)
@@ -159,13 +175,6 @@ function love.wheelmoved(x, y)
 end
 
 function love.keyreleased(key)
-    if key == 'lshift' or key == 'rshift' then
-        -- Shift tapped (quickly, with no click while it was held): dodge
-        local tap = player.shiftTap
-        player.shiftTap = nil
-        if tap and not tap.clicked and love.timer.getTime() - tap.t < 0.3 and gamestate == 1 then player:dodge() end
-        return
-    end
     if pause.active or isPlayerFrozen() then return end
     if key == 'z' then
         useItem('z', true)
@@ -174,7 +183,13 @@ function love.keyreleased(key)
     end
 end
 
+mouseHeld = {} -- the mouse buttons down right now
+
 function love.mousepressed( x, y, button )
+    if intro.active then
+        intro:skip()
+        return
+    end
     if gamestate == 0 then
         menu:mousepressed(x, y, button)
         return
@@ -208,31 +223,27 @@ function love.mousepressed( x, y, button )
         end
     end
 
-    if player.shiftTap then player.shiftTap.clicked = true end -- Shift+click is the flame, not a dodge
+    -- one press, one action: a button only counts again once it has come back up
+    -- (a second "down" without an "up" between is a duplicate event, not a press)
+    if mouseHeld[button] then return end
+    mouseHeld[button] = true
     if button == 1 then
         if pause.active then
             pause:equip('left')
         else
-            if love.keyboard.isDown('lshift') then
-                useItem('altL')
-            else
-                useItem('left')
-            end
+            useItem('left')
         end
     elseif button == 2 then
         if pause.active then
             pause:equip('right')
         else
-            if love.keyboard.isDown('lshift') then
-                useItem('altR')
-            else
-                useItem('right')
-            end
+            useItem('right')
         end
     end
 end
 
 function love.mousereleased( x, y, button )
+    mouseHeld[button] = false
     if isPlayerFrozen() then return end
     if button == 1 then
         if pause.active then

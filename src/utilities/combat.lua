@@ -10,11 +10,15 @@
 -- the middle of its strike (monster:striking()) clashes instead of cutting.
 --
 -- Perfect dodge. Rolling, dodging or Shadow Stepping through a blow that would
--- have landed, within PERFECT_WINDOW of starting the move: time slows for a
--- moment, some stamina comes back, and the hero is left in a ring of afterimages.
+-- have landed, within PERFECT_WINDOW of starting the move: whoever threw the
+-- blow is slowed almost to a stop for SLOWED_TIME (it moves, swings and
+-- animates at SLOWED_SCALE), some stamina comes back, and the hero is left in a
+-- ring of afterimages. Monsters and bosses run their frames between
+-- combat:slowIn and combat:slowOut for this.
 --
--- Counter. After a clash or a perfect dodge, the hero's next cut (within
--- COUNTER_TIME) does double damage.
+-- Counter. The hero's next cut after a clash or a perfect dodge (within
+-- COUNTER_TIME), and every cut on a monster still slowed by a perfect dodge,
+-- does COUNTER_BONUS times the damage.
 --
 -- Glints. A monster winding up a blow flashes a star on it just before it comes:
 -- white ("parry") can be clashed, red ("dodge") can only be dodged.
@@ -24,34 +28,79 @@ combat = {}
 combat.PARRY_WINDOW = 0.22
 combat.PERFECT_WINDOW = 0.25
 combat.COUNTER_TIME = 1.5
+combat.COUNTER_BONUS = 2
 
 local PARRY_REACH = 46                    -- the blow must come from this close...
 local PARRY_ARC = math.cos(math.rad(80))  -- ...and within 80 degrees of the swing
-local SLOW_SCALE, SLOW_TIME = 0.35, 0.45  -- the perfect dodge's slow motion (real seconds)
+local SLOWED_SCALE, SLOWED_TIME = 0.15, 3 -- a perfectly dodged attacker: this fast, for this long
+local SLOWED_REACH = 120                  -- (a blow from nobody in particular: whoever is nearest, this close)
 local PERFECT_STAMINA = 25
 local SPARK_TIME, GLINT_TIME = 0.3, 0.32
 
-combat.slow = 0      -- real seconds of slow motion left
 combat.counter = 0   -- the next cut is a counter while this runs
 combat.sparks = {}
 combat.glints = {}
+combat.ticked = {}      -- the monsters and bosses that ran this frame (and the last): who could be slowed
+combat.lastTicked = {}
 
 function combat:clear()
     self.sparks, self.glints = {}, {}
-    self.slow, self.counter = 0, 0
+    self.ticked, self.lastTicked = {}, {}
+    self.counter = 0
 end
 
--- how fast the world runs (love.update scales its dt by this)
-function combat:timeScale()
-    return self.slow > 0 and SLOW_SCALE or 1
+-- one frame of `who` (a monster or a boss, its body in who.physics) in its own
+-- time: returns the dt to run it with. Slowed, its body is kept at a fraction
+-- of the speed its own code gives it (combat:slowOut), and here that speed is
+-- handed back, so the code never knows
+function combat:slowIn(who, dt)
+    self.ticked[who] = true
+    if who.slowScaled and who.physics then
+        local vx, vy = who.physics:getLinearVelocity()
+        who.physics:setLinearVelocity(vx / who.slowScaled, vy / who.slowScaled)
+    end
+    who.slowScaled = nil
+    if (who.slowTimer or 0) <= 0 then return dt end
+    who.slowTimer = who.slowTimer - dt
+    return dt * SLOWED_SCALE
 end
 
--- in real time, so the slow motion lasts as long as it says
-function combat:updateReal(dt)
-    if self.slow > 0 then self.slow = self.slow - dt end
+function combat:slowOut(who)
+    if (who.slowTimer or 0) <= 0 or not who.physics or who.dead then return end
+    local vx, vy = who.physics:getLinearVelocity()
+    who.physics:setLinearVelocity(vx * SLOWED_SCALE, vy * SLOWED_SCALE)
+    who.slowScaled = SLOWED_SCALE
+end
+
+function combat:slowed(who)
+    return (who.slowTimer or 0) > 0
+end
+
+-- the attacker of a blow from (x, y) that came from nobody in particular (a
+-- shot, a touch): whoever ran lately and stands nearest
+local function nearestAttacker(x, y)
+    local best, bestD = nil, SLOWED_REACH
+    for _, list in ipairs({ combat.ticked, combat.lastTicked }) do
+        for who in pairs(list) do
+            if not who.dead and who.physics then
+                local ex, ey = who.physics:getPosition()
+                local d = distanceBetween(x, y, ex, ey)
+                if d < bestD then best, bestD = who, d end
+            end
+        end
+    end
+    return best
+end
+
+function combat:slow(who)
+    if not who or not who.physics or who.dead then return end
+    who.slowTimer = SLOWED_TIME
+    local ex, ey = who.physics:getPosition()
+    floatTexts:spawn(ex, ey - 22, "SLOWED", {0.6, 0.8, 1}, { life = 1 })
 end
 
 function combat:update(dt)
+    self.lastTicked, self.ticked = self.ticked, {}
     if self.counter > 0 then self.counter = self.counter - dt end
     for i = #self.sparks, 1, -1 do
         local s = self.sparks[i]
@@ -88,9 +137,9 @@ local function open()
 end
 
 -- the blow reaches the hero: slipped (a roll, a dodge, a Shadow Step) or it lands
-local function land(amount, x, y, boss)
+local function land(amount, x, y, boss, attacker)
     if player:evading() then
-        combat:evaded(x, y)
+        combat:evaded(x, y, attacker)
         return "evaded"
     end
     player:hurt(amount, x, y, boss)
@@ -105,7 +154,7 @@ function combat:melee(attacker, amount, x, y, boss)
         self:clash(attacker, x, y)
         return "clash"
     end
-    return land(amount, x, y, boss)
+    return land(amount, x, y, boss, attacker)
 end
 
 -- a blow that can only be dodged: "evaded", "hit" or nil
@@ -132,19 +181,20 @@ function combat:clash(attacker, x, y)
     local away = vector(px - x, py - y)
     if away:len() < 0.01 then away = player.attackDir * -1 end
     away = away:normalized()
-    player:setLinearVelocity(away.x * 150, away.y * 150)
+    player:stepBack(away, 150, 0.12)
     player.parryTimer = 0
     self.counter = self.COUNTER_TIME
     floatTexts:spawn(mx, my - 10, "CLASH!", {1, 0.92, 0.6}, { life = 0.8 })
     if attacker and attacker.onClash then attacker:onClash(away * -1) end
 end
 
--- the hero slipped a blow: right as it came, it's a perfect dodge (once a move)
-function combat:evaded(x, y)
+-- the hero slipped a blow from (x, y) (by `attacker`, when it's known): right as
+-- it came, it's a perfect dodge (once a move)
+function combat:evaded(x, y, attacker)
     if player.perfectUsed then return end
     if love.timer.getTime() - (player.evadeStart or -10) > self.PERFECT_WINDOW then return end
     player.perfectUsed = true
-    self.slow = SLOW_TIME
+    self:slow(attacker or nearestAttacker(x, y))
     self.counter = self.COUNTER_TIME
     player.stamina = math.min(player.staminaMax, player.stamina + PERFECT_STAMINA)
     floatTexts:spawn(player:getX(), player:getY() - 16, "PERFECT!", {0.6, 0.95, 1}, { big = true, life = 0.9 })
@@ -157,25 +207,44 @@ function combat:evaded(x, y)
     end
 end
 
--- the hero's cut: doubled (and announced) if it's a counter; returns the damage
-function combat:cutPower(base)
-    if self.counter > 0 then return base * 2, true end
+-- the hero's cut on `target`: the damage, and whether it's a counter (right
+-- after a clash or a perfect dodge, or on anyone a perfect dodge slowed)
+function combat:cutPower(base, target)
+    if self.counter > 0 or (target and self:slowed(target)) then return base * self.COUNTER_BONUS, true end
     return base, false
 end
 
--- a counter landed: it's spent
+-- a counter landed (the one after a clash is spent; a slowed monster takes them
+-- until it wears off)
 function combat:countered(x, y)
     self.counter = 0
     globalStun = math.max(globalStun, 0.07)
-    floatTexts:spawn(x, y - 14, "COUNTER!", {1, 0.75, 0.3}, { life = 0.8 })
+    shake:start(0.1, 1.5, 0.02)
+    floatTexts:spawn(x, y - 14, "COUNTER! x" .. self.COUNTER_BONUS, {1, 0.75, 0.3}, { life = 0.8 })
 end
 
 ----------------------------------------------------------------------- draw
 
--- in the world: the clash sparks, and the glints (both glow)
+-- in the world: the clash sparks, the glints (both glow), and a ring of
+-- ticking marks round the feet of anyone slowed
 function combat:draw()
-    if #self.sparks == 0 and #self.glints == 0 then return end
+    local slowed = {}
+    for who in pairs(self.ticked) do
+        if self:slowed(who) and who.physics and not who.dead then table.insert(slowed, who) end
+    end
+    if #self.sparks == 0 and #self.glints == 0 and #slowed == 0 then return end
     pixelfx.world(function()
+        local now = love.timer.getTime()
+        for _, who in ipairs(slowed) do
+            local ex, ey = who.physics:getPosition()
+            local fade = math.min(1, who.slowTimer / 0.5) -- (fades out as it wears off)
+            love.graphics.setLineWidth(1)
+            for i = 0, 7 do
+                local a = i / 8 * math.pi * 2 + now * 0.8
+                love.graphics.setColor(0.6, 0.8, 1, (0.45 + 0.35 * math.sin(now * 4 + i)) * fade)
+                love.graphics.line(ex + math.cos(a) * 9, ey + 3 + math.sin(a) * 4, ex + math.cos(a + 0.4) * 9, ey + 3 + math.sin(a + 0.4) * 4)
+            end
+        end
         love.graphics.setBlendMode("add")
         for _, s in ipairs(self.sparks) do
             local p = s.t / SPARK_TIME

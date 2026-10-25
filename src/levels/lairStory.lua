@@ -349,7 +349,10 @@ function lairStory:update(dt)
     if self.spare and player.health < 0 then player.health = 0 end
     if not self.active or self.mapName ~= "lair" or not self.gula then return end
 
-    self.gula:update(dt)
+    local gula = self.gula
+    gula:update(combat:slowIn(gula, dt)) -- (slowed for a while when dodged perfectly)
+    combat:slowOut(gula)
+    if not self.gula then return end
     -- keep Gula in frame while it fights (and looms over the fallen hero, until Rick comes)
     if self.fighting or (self.rescue and not self.rick) then
         cam.bias = cam.bias or {}
