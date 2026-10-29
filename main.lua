@@ -50,6 +50,11 @@ function love.keypressed(key, scancode, isrepeat)
         intro:skip()
         return
     end
+    -- the Adventure Book open: it has the keys (src/ui/book.lua)
+    if book.active then
+        book:keypressed(key)
+        return
+    end
     -- F3: the developer panel (and, while it's open, its number keys)
     if devTools:keypressed(key) then
         return
@@ -96,6 +101,11 @@ function love.keypressed(key, scancode, isrepeat)
         end
         if key == 'n' then
             minimap.visible = not minimap.visible
+            return
+        end
+        -- B: the Adventure Book (J: at its journal)
+        if (key == 'b' or key == 'j') and not pause.active and not isPlayerFrozen() and curtain.state == 0 then
+            book:open(key == 'j' and "journal" or nil)
             return
         end
         -- Space (or Q): Shadow Step. Left Shift: roll. R: the flame
@@ -170,7 +180,7 @@ function love.keypressed(key, scancode, isrepeat)
 end
 
 function love.wheelmoved(x, y)
-    if gamestate ~= 1 or pause.active or y == 0 then return end
+    if gamestate ~= 1 or pause.active or book.active or y == 0 then return end
     setZoomLevel(zoomLevel + y * 0.1)
 end
 
@@ -188,6 +198,10 @@ mouseHeld = {} -- the mouse buttons down right now
 function love.mousepressed( x, y, button )
     if intro.active then
         intro:skip()
+        return
+    end
+    if book.active then
+        book:mousepressed(x, y, button)
         return
     end
     if gamestate == 0 then

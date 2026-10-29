@@ -85,8 +85,9 @@ function staff:vePower()
 end
 
 function staff:maxMana()
-    if not (data.story.manaUnlocked or data.story.rickDefeated) then return BASE_MANA end
-    return BASE_MANA + staff.manaBonus(self:vePower())
+    local spirit = progression and progression:manaBonus() or 0 -- (the Spirit attribute)
+    if not (data.story.manaUnlocked or data.story.rickDefeated) then return BASE_MANA + spirit end
+    return BASE_MANA + staff.manaBonus(self:vePower()) + spirit
 end
 
 -- spells take mana from the pool; regeneration pauses for a moment after

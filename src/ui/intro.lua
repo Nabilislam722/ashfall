@@ -2,7 +2,7 @@
 -- games: to Lavender Dome, a slow tour of the world (each place dissolving into
 -- the next, its name in the corner), the bosses caught mid-fight (the picture
 -- freezes and greys, and their name slams in), a wall of character panels, and
--- at the end ASHFALL, Beta Testing. Any key or click skips it.
+-- at the end ASHFALL, Alpha Testing. Any key or click skips it.
 --
 -- intro:play(onDone)   starts it (src/ui/menu.lua, for a New Game); onDone runs
 --                      once, when it's over, on black
@@ -16,7 +16,8 @@ intro = { active = false }
 
 local MUSIC = "sounds/music/Lavender_Dome.mp3"
 local MUSIC_VOLUME = 0.8
-local MUSIC_TAIL = 40     -- the music plays on into the game, fading away over this long
+local MUSIC_END = 90      -- the track runs 1:30: played through, the intro leaves it playing
+                          -- on into the game, fading out to end there (skipped, it goes too)
 local FADE = 1.6          -- a shot dissolving into the next
 local FIRST_FADE = 2      -- the first one, out of black
 local END_FADE = 1.4      -- the last fade to black
@@ -575,7 +576,7 @@ local function title(self, t, w, h)
         color(1, 0.9, 0.7, 0.35 * (1 - span(t, SLAM, SLAM + 0.45)))
         love.graphics.rectangle("fill", 0, 0, w, h)
     end
-    -- a line grows under it, and BETA TESTING comes up on it
+    -- a line grows under it, and ALPHA TESTING comes up on it
     local grow = smooth(span(t, SLAM + 0.3, SLAM + 1.0))
     local ly = y0 + th + scale * 1.5
     love.graphics.setLineWidth(math.max(1, scale * 0.35))
@@ -583,7 +584,7 @@ local function title(self, t, w, h)
     love.graphics.line(w / 2 - tw * 0.45 * grow, ly, w / 2 + tw * 0.45 * grow, ly)
     local beta = self.fonts.beta
     love.graphics.setFont(beta)
-    local text = "B E T A    T E S T I N G"
+    local text = "A L P H A    T E S T I N G"
     local bw = beta:getWidth(text)
     local fade = span(t, SLAM + 0.6, SLAM + 1.3)
     outlined(text, (w - bw) / 2, ly + scale * 2.5, { 0.95, 0.93, 0.88, fade }, { 0, 0, 0, fade }, math.max(1, scale * 0.3))
@@ -726,6 +727,7 @@ function intro:play(onDone)
     self.baked = {}
     self.toBake = 0
     self.ending, self.endTime = nil, nil
+    self.skipped = false
     self.cue = 1
     self.fonts = {
         caption = love.graphics.newFont(FONT_FUTURE, math.floor(6 * scale)),
@@ -742,6 +744,7 @@ end
 
 function intro:skip()
     if not self.active then return end
+    self.skipped = true
     if not self.t then
         self:finish() -- (still baking: straight on)
         return
@@ -757,7 +760,9 @@ function intro:stopMusic()
 end
 
 function intro:finish()
-    self.tailT = 0 -- (the music plays on, fading: intro:update)
+    -- skipped, the music goes with it; played through, it plays on (intro:update)
+    if self.music and self.skipped then self:stopMusic() end
+    self.tailStart = self.t
     for _, b in pairs(self.baked or {}) do
         if b.canvas then b.canvas:release() end
     end
@@ -772,10 +777,10 @@ end
 
 function intro:update(dt)
     if not self.active then
-        -- the game has begun: the music plays on, slowly fading away
+        -- the game has begun: the music plays on, slowly fading out to its end
         if self.music then
-            self.tailT = self.tailT + dt
-            local left = 1 - clamp01(self.tailT / MUSIC_TAIL)
+            self.t = self.t + dt
+            local left = 1 - clamp01((self.t - self.tailStart) / (MUSIC_END - 0.3 - self.tailStart))
             self.music:setVolume(self.musicVolume * left * left)
             if left <= 0 or not self.music:isPlaying() then self:stopMusic() end
         end
@@ -815,7 +820,11 @@ function intro:update(dt)
     if not self.ending and self.t >= TOTAL - END_FADE then self.ending, self.endTime = 0, END_FADE end
     if self.ending then self.ending = self.ending + dt end
     self.musicVolume = MUSIC_VOLUME * span(self.t, 0, 0.6)
-    if self.music then self.music:setVolume(self.musicVolume) end
+    if self.music then
+        -- (skipped: the music fades with the picture)
+        local going = self.skipped and clamp01(self.ending / self.endTime) or 0
+        self.music:setVolume(self.musicVolume * (1 - going))
+    end
     if self.ending and self.ending >= self.endTime then self:finish() end
 end
 

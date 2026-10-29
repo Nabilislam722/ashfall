@@ -273,6 +273,14 @@ function npcs:update(dt)
     end
 end
 
+-- a look's face (image, quad), for portraits away from the villager (the
+-- Adventure Book's quest givers); nil if there's no such look
+function npcs:face(look)
+    local l = lookOf(look)
+    if not l then return nil end
+    return l.portrait, l.face
+end
+
 function npcs:find(name)
     for _, n in ipairs(npcs) do
         if n.name == name then return n end

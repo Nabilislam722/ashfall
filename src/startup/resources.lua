@@ -148,8 +148,16 @@ sprites.items.chestBigClosed = love.graphics.newImage('sprites/environment/chest
 sprites.items.chestBigOpen = love.graphics.newImage('sprites/environment/chestBigOpen.png')
 sprites.items.food = love.graphics.newImage('sprites/items/food.png')
 sprites.items.shadowStep = love.graphics.newImage('sprites/items/shadowStep.png')
+sprites.items.adventureBook = love.graphics.newImage('sprites/items/adventureBook.png') -- (held up when Mira hands it over)
 sprites.items.staff = love.graphics.newImage('sprites/items/stormStaff.png')
 sprites.items.mobLoot = love.graphics.newImage('sprites/items/mobLoot.png')
+-- the Adventure Book (src/ui/book.lua), from the Adventure Book pack: the book
+-- opening, its pages turning, bookmarks, title ribbons, page pieces, and the
+-- island map with its places
+sprites.book = {}
+for _, name in ipairs({ "open", "turnRight", "turnLeft", "bookmarks", "titles", "elements", "places" }) do
+    sprites.book[name] = love.graphics.newImage('sprites/ui/book/' .. name .. '.png')
+end
 sprites.hud = {}
 sprites.hud.heart = love.graphics.newImage('sprites/ui/heart.png')
 sprites.hud.halfHeart = love.graphics.newImage('sprites/ui/heart-half.png')
@@ -241,7 +249,7 @@ function initFonts()
     fonts.dialogueName = love.graphics.newFont("fonts/vt323/VT323-Regular.ttf", 7.5*scale)
     fonts.small = love.graphics.newFont("fonts/vt323/VT323-Regular.ttf", 6.5*scale)
     fonts.hud = love.graphics.newFont("fonts/kenney-pixel-square/Kenney-Pixel-Square.ttf", 4*scale)
-    fonts.hudSmall = love.graphics.newFont("fonts/kenney-pixel-square/Kenney-Pixel-Square.ttf", 2.6*scale)
+    fonts.hudSmall = love.graphics.newFont("fonts/vt323/VT323-Regular.ttf", 4.4*scale) -- (the HUD's numbers, in the game's own type)
     fonts.hudGoal = love.graphics.newFont("fonts/vt323/VT323-Regular.ttf", 5*scale)
     fonts.menu = love.graphics.newFont("fonts/vt323/VT323-Regular.ttf", 5.5*scale)
     fonts.menuSmall = love.graphics.newFont("fonts/vt323/VT323-Regular.ttf", 4.5*scale)

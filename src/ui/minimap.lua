@@ -15,16 +15,6 @@ minimap.canvas = nil
 
 local SHRINK = 8 -- world pixels per minimap pixel
 
-local MAP_NAMES = {
-    test = "Willow Meadow",
-    village = "Willowbrook",
-    woods = "Whispering Woods",
-    dungeon = "Old Dungeon",
-    lair = "Gula's Lair",
-    testCave = "Cave",
-    test2 = "Forest Clearing",
-}
-
 function minimap:build(map, mapName)
     self.mapName = mapName
     self.mapW = map.width * map.tilewidth
@@ -175,7 +165,7 @@ function minimap:draw()
     love.graphics.circle("fill", px, py, dot * 0.85)
 
     -- map name
-    local name = MAP_NAMES[self.mapName] or self.mapName
+    local name = places:name(self.mapName)
     love.graphics.setFont(fonts.hudGoal)
     love.graphics.setColor(0, 0, 0, 0.7)
     love.graphics.printf(name, x - 3 + 1.5, y + h + 3 + 1.5, w + 6, "right")

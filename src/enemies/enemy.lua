@@ -433,6 +433,7 @@ function enemies:destroyDead()
                 local ex, ey = enemies[i].physics:getPosition()
                 mobLoot:drop(enemies[i], ex, ey)
             end
+            if progression then progression:killed(enemies[i]) end -- (XP)
             if enemies[i].spawner then
                 enemies[i].spawner.alive = math.max(0, enemies[i].spawner.alive - 1)
             end

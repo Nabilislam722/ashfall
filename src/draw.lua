@@ -164,6 +164,7 @@ function drawAfterCamera()
         domainFx:drawChains()
         domainFx:drawShouts()
         pause:draw()
+        book:draw() -- the Adventure Book (src/ui/book.lua)
 
         devTools:drawScreen()
     end

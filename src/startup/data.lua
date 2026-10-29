@@ -60,10 +60,21 @@ function createNewSave(fileNumber)
     data.story.rickTalked = false   -- talked to Rick after beating him ("I can't remember anything")
     data.story.rickTalkDay = 0      -- ...on this day; the next day, the village talks about the guild
     data.story.guildHinted = false  -- a villager sent the hero to the Adventurers' Guild
+    data.story.bookGiven = false    -- Mira at the Adventurers' Guild gave the hero an Adventure Book
 
     -- the world's clock (src/levels/worldClock.lua)
     data.day = 1
     data.clock = 0.12 -- the morning of the first day
+
+    -- experience (src/levels/progression.lua: the level comes from it) and the
+    -- points spent on each attribute
+    data.xp = 0
+    data.stats = { vitality = 0, strength = 0, spirit = 0, endurance = 0 }
+
+    -- places been to (src/levels/places.lua), and the journal's own memory
+    -- (src/levels/quests.lua): quests seen, quests paid out, the one tracked
+    data.visited = {}
+    data.journal = { seen = {}, done = {}, tracked = nil }
 
     -- abilities learned on the adventure
     data.skills = {}
@@ -126,5 +137,6 @@ function startFresh(fileNumber)
     data.playerY = 310
     player.state = 0
     player.health = data.maxHealth
+    if progression then progression:apply() end
     if staff then staff:refill() end
 end

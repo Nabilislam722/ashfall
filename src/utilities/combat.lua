@@ -28,7 +28,7 @@ combat = {}
 combat.PARRY_WINDOW = 0.22
 combat.PERFECT_WINDOW = 0.25
 combat.COUNTER_TIME = 1.5
-combat.COUNTER_BONUS = 2
+combat.COUNTER_BONUS = 3
 
 local PARRY_REACH = 46                    -- the blow must come from this close...
 local PARRY_ARC = math.cos(math.rad(80))  -- ...and within 80 degrees of the swing

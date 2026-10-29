@@ -11,7 +11,7 @@ roamingBoss.active = false
 roamingBoss.redFlash = 0
 
 local KEY = "demonLord"
-local REWARD_GOLD = 150
+local REWARD_GOLD = 500
 local FIGHT_ZOOM = 0.8   -- the camera pulls back at least this far while he fights
 
 function roamingBoss:clear()

@@ -100,6 +100,7 @@ function loadMap(mapName, destX, destY)
         player:setPosition(checkpoints[1].x, checkpoints[1].y + 12)
     end
     loadHighGround(gameMap)
+    places:visit(mapName) -- (into the Adventure Book, the first time)
 
     villageStory:onMapLoaded(gameMap, mapName)
     lairStory:onMapLoaded(gameMap, mapName)

@@ -17,12 +17,6 @@ menu.options = {}
 
 local ORANGE = {1, 0.42, 0.1}
 
-local MAP_NAMES = {
-    test = "Willow Meadow", village = "Willowbrook", woods = "Whispering Woods",
-    dungeon = "Old Dungeon", testCave = "Cave", test2 = "Forest Clearing",
-    lair = "Gula's Lair",
-}
-
 function menu:open()
     self.selected = 1
     self.confirming = false
@@ -239,7 +233,7 @@ function menu:draw()
         local title, detail
         if option == "continue" then
             title = "Continue"
-            local place = MAP_NAMES[best.save.map] or tostring(best.save.map)
+            local place = places:name(best.save.map)
             detail = place .. "  -  " .. (best.source == "chain" and "saved on-chain " or "saved on this device ") .. ago(best.savedAt)
         else
             title = "New Game"
@@ -323,7 +317,7 @@ function menu:draw()
     love.graphics.setFont(fonts.menuSmall)
     local lines = {
         "WASD / arrows: move     Mouse: aim and attack     Shift: roll     Space: Shadow Step (once learned)",
-        "E: talk, trade, save at checkpoints, or Fireball (hold to charge)     R: flame     Tab: items",
+        "E: talk, trade, save at checkpoints, or Fireball (hold to charge)     R: flame     Tab: items     B: Adventure Book",
         "M: menu and wallet     N: minimap     + / - or wheel: zoom     F3: free roam",
         "Swing into a blow on its white glint to clash it     Roll or Shadow Step right as one lands: perfect dodge (it slows the attacker)",
         web and "Up / Down and Enter to choose" or "Up / Down and Enter to choose     Backspace: fullscreen     Esc: quit",

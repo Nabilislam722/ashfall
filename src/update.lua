@@ -14,6 +14,11 @@ end
 
 function updateGame(dt)
     miscUpdate(dt)
+    -- the Adventure Book open: the world waits (src/ui/book.lua)
+    if book.active then
+        book:update(dt)
+        return
+    end
     if globalStun > 0 then return end
 
     flux.update(dt)
@@ -57,6 +62,7 @@ function updateGame(dt)
     shop:update(dt)
     hemiExchange:update(dt)
     floatTexts:update(dt)
+    quests:update(dt) -- quests coming in and finished (src/levels/quests.lua)
     updateToast(dt)
     respawn:update(dt)
 

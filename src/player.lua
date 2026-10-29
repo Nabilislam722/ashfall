@@ -122,7 +122,7 @@ end
 
 function isPlayerFrozen()
     return dialogue.active or shop.active or hemiExchange.active or manaWell.active or topMenu.open
-        or cutscene.active or respawn.pending
+        or cutscene.active or respawn.pending or (book ~= nil and book.active)
 end
 
 function player:update(dt)
