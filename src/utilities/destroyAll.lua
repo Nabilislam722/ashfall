@@ -2,6 +2,8 @@ function destroyAll()
     if villageDecor then villageDecor:setMap(nil, nil) end
     villageStory:clear()
     lairStory:clear()
+    roamingBoss:clear()
+    combat:clear()
     colliderTableDestroy(walls)
     colliderTableDestroy(transitions)
 

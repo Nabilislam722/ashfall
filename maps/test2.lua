@@ -9,8 +9,8 @@ return {
   height = 28,
   tilewidth = 16,
   tileheight = 16,
-  nextlayerid = 17,
-  nextobjectid = 203,
+  nextlayerid = 18,
+  nextobjectid = 204,
   properties = {},
   tilesets = {
     {
@@ -1057,6 +1057,13 @@ return {
         { id = 200, name = "slime", type = "", shape = "point", x = 272, y = 304, width = 0, height = 0, rotation = 0, opacity = 1, visible = true, properties = { ["form"] = 1 } },
         { id = 201, name = "slime", type = "", shape = "point", x = 368, y = 352, width = 0, height = 0, rotation = 0, opacity = 1, visible = true, properties = { ["form"] = 1 } },
         { id = 202, name = "slime", type = "", shape = "point", x = 144, y = 160, width = 0, height = 0, rotation = 0, opacity = 1, visible = true, properties = { ["form"] = 2 } },
+      }
+    },
+    {
+      type = "objectgroup", draworder = "topdown", id = 17, name = "Boss", class = "",
+      visible = true, opacity = 1, offsetx = 0, offsety = 0, parallaxx = 1, parallaxy = 1, properties = {},
+      objects = {
+        { id = 203, name = "demonLord", type = "roam", shape = "rectangle", x = 336, y = 216, width = 240, height = 56, rotation = 0, opacity = 1, visible = true, properties = {  } },
       }
     },
   }

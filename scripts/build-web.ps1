@@ -22,7 +22,7 @@ try {
 
     # (the raw asset packs stay out: the game uses its own copies in sprites/ and maps/)
     Get-ChildItem -Force $ProjectRoot |
-        Where-Object { $_.Name -notin @(".git", "web", "scripts", "docs", "attached_assets", ".agents", ".local", ".cache", ".env", ".config", "cloudflare", "wrangler.jsonc", ".claude", "contracts", "node_modules", "package.json", "package-lock.json", ".gitignore", ".wrangler", ".dev.vars", "tests", "tiles", "hp-mana-stamina-and-scroll-bar-pixel-rpg-asset-pack", "Mana Capacity Math.docx", "dist", "farm", "blacksmith", "npcs are market") } |
+        Where-Object { $_.Name -notin @(".git", "web", "scripts", "docs", "attached_assets", ".agents", ".local", ".cache", ".env", ".config", "cloudflare", "wrangler.jsonc", ".claude", "contracts", "node_modules", "package.json", "package-lock.json", ".gitignore", ".wrangler", ".dev.vars", "tests", "tiles", "hp-mana-stamina-and-scroll-bar-pixel-rpg-asset-pack", "Mana Capacity Math.docx", "dist", "farm", "blacksmith", "npcs are market", "DemonLord", "craftpix-net-137102-adventure-fantasy-book-pixel-art") } |
         Copy-Item -Destination $StageRoot -Recurse -Force
     # (nor the maps' backups)
     Get-ChildItem -Force (Join-Path $StageRoot "maps") -Directory | Where-Object { $_.Name -like "_old*" } | Remove-Item -Recurse -Force
@@ -35,7 +35,7 @@ try {
     Write-Host "Created $GamePackage"
 
     # New b= numbers on the page's script and style links, so browsers load the
-    # new index.html, style.css, bridge.js, menu.js and player.js after a deploy
+    # new index.html, style.css, bridge.js, fullscreen.js and player.js after a deploy
     $IndexHtml = Join-Path $WebRoot "index.html"
     $BuildId = Get-Date -Format "yyyyMMddHHmm"
     $IndexSource = [System.IO.File]::ReadAllText($IndexHtml)

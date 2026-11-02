@@ -28,6 +28,7 @@ function drawCamera()
     spawners:drawGround()
     villageStory:drawGround()
     lairStory:drawGround()
+    roamingBoss:drawGround()
     staff:drawGround()
     chests:draw(-1)
     bombs:draw()
@@ -46,12 +47,14 @@ function drawCamera()
     spawners:drawAir()
     villageStory:drawAir()
     lairStory:drawAir()
+    roamingBoss:drawAir()
     staff:draw()
     effects:drawDarkMagic()
     blasts:draw()
     projectiles:draw()
     effects:draw(1)
     particles:draw()
+    combat:draw() -- clash sparks, and the glints on blows about to land
 
     wind:draw()
 
@@ -106,6 +109,7 @@ function drawSortedWorld()
     checkpoints:collect(items)
     villageStory:collect(items)
     lairStory:collect(items)
+    roamingBoss:collect(items)
     for _, t in ipairs(trees) do
         table.insert(items, { y = t.y + 10, draw = drawTree, arg = t })
     end
@@ -126,6 +130,7 @@ function drawAfterCamera()
     if gamestate ~= 0 then
         lighting:drawDarkness()
         lairStory:drawEmissive()
+        roamingBoss:drawEmissive()
         staff:drawEmissive()
         -- the developer helpers (F3), over the darkness so they read in dungeons
         cam:attach()
@@ -142,9 +147,10 @@ function drawAfterCamera()
             drawHUD()
             villageStory:drawHUD()
             lairStory:drawHUD()
+            roamingBoss:drawHUD()
             drawToastAndObjective()
             minimap:draw()
-            topMenu:draw()
+            settingsButton:draw()
         end
         vsBanner:draw()
         domainFx:draw()
@@ -158,9 +164,25 @@ function drawAfterCamera()
         domainFx:drawChains()
         domainFx:drawShouts()
         pause:draw()
+        book:draw() -- the Adventure Book (src/ui/book.lua)
 
         devTools:drawScreen()
     end
 
+    settingsMenu:draw() -- (over the title screen, or the game)
     curtain:draw()
+    if settings.values.fps then drawFps() end
+end
+
+-- the frame rate in the bottom-left corner (Settings: Show FPS)
+function drawFps()
+    local f = fonts.menuSmall
+    local text = love.timer.getFPS() .. " FPS"
+    local x, y = math.floor(4 * scale), love.graphics.getHeight() - f:getHeight() - math.floor(3 * scale)
+    love.graphics.setFont(f)
+    love.graphics.setColor(0, 0, 0, 0.65)
+    love.graphics.print(text, x + 2, y + 2)
+    love.graphics.setColor(0.85, 1, 0.7, 1)
+    love.graphics.print(text, x, y)
+    setWhite()
 end

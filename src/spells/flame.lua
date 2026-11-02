@@ -142,7 +142,7 @@ function spawnFlame(x, y)
             for _,e in ipairs(hitEnemies) do
                 local knockbackDir = self.dir
                 e.parent:burn()
-                e.parent:hit(0.5, knockbackDir, 0.06)
+                e.parent:hit(0.5, knockbackDir, 0.06, nil, "fire")
             end
         end
     end

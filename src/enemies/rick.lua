@@ -296,8 +296,8 @@ function spawnRick(x, y, arena)
         self:dust(10)
         self:spawnRing(0)
         if self.phase >= 3 then self:spawnRing(0.3) end
-        if self:distToPlayer() < 16 and player.state ~= 0.5 and not isPlayerFrozen() then
-            player:hurt(1, self.x, self.y, true)
+        if self:distToPlayer() < 16 then
+            combat:unblockable(1, self.x, self.y, true)
         end
         self.state = "recover"
         self.timer = self:phaseValue(1.0, 0.8, 0.6)
@@ -556,9 +556,8 @@ function spawnRick(x, y, arena)
                 remove = true
                 self:spawnBits(c.x, c.y, 3)
             end
-            if not remove and not isPlayerFrozen() and player.damagedTimer <= 0
-                and distanceBetween(c.x, c.y, player:getX(), player:getY()) < 7 then
-                player:hurt(0.5, c.x - c.vx, c.y - c.vy, true)
+            if not remove and distanceBetween(c.x, c.y, player:getX(), player:getY()) < 7
+                and combat:unblockable(0.5, c.x - c.vx, c.y - c.vy, true) == "hit" then
                 remove = true
             end
             if remove then table.remove(self.crumbs, i) end
@@ -570,11 +569,10 @@ function spawnRick(x, y, arena)
                 r.delay = r.delay - dt
             else
                 r.r = r.r + r.speed * dt
-                if not r.hit and player.state ~= 0.5 and not isPlayerFrozen() and player.damagedTimer <= 0 then
+                if not r.hit then
                     local d = distanceBetween(r.x, r.y, player:getX(), player:getY())
-                    if math.abs(d - r.r) < 5 then
+                    if math.abs(d - r.r) < 5 and combat:unblockable(0.5, r.x, r.y, true) == "hit" then
                         r.hit = true
-                        player:hurt(0.5, r.x, r.y, true)
                     end
                 end
                 if r.r > r.max then table.remove(self.rings, i) end
@@ -692,9 +690,9 @@ function spawnRick(x, y, arena)
             else
                 self.physics:setLinearVelocity(self.vx, self.vy)
                 if math.random() < dt * 25 then self:dust(1) end
-                if not self.chargeHit and not isPlayerFrozen() and self:distToPlayer() < 15 then
+                if not self.chargeHit and self:distToPlayer() < 15
+                    and combat:unblockable(1, self.x, self.y, true) ~= "evaded" then
                     self.chargeHit = true
-                    player:hurt(1, self.x, self.y, true)
                 end
             end
         elseif s == "eat" then

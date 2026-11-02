@@ -4,6 +4,12 @@
 --   form 2, yellow: crackles for a moment, then bursts with lightning all
 --     around it (step out of the ring, or dodge through it)
 --   form 3, red: the toughest; rears up and lunges with its jaws
+-- The red one's lunge can be met with a swing (a white glint warns of it); the
+-- others' sprays and bursts only a dodge gets out of (a red glint;
+-- src/utilities/combat.lua).
+-- Each is made of its element (water, lightning, fire: src/enemies/enemy.lua):
+-- immune to attacks of that element, and hurt double by its opposite's (a
+-- Fireball through a blue slime, say; a red one just soaks fire up).
 -- A hit interrupts the attack it was winding up. Touching any of them stings,
 -- as with every monster. Beaten, they melt into a puddle (effect "slimeDeath")
 -- and leave a blob of gel for the guild (src/items/mobLoot.lua).
@@ -13,6 +19,7 @@ local FORMS = {
     { health = 4, speed = 26, range = 30, windup = 0.6, damage = 0.5, cooldown = 1.6, burst = 26 },
     { health = 6, speed = 30, range = 44, windup = 0.45, damage = 1, cooldown = 1.4, lunge = 190 },
 }
+local ELEMENTS = { "water", "lightning", "fire" } -- by form
 local STRIKE_TIME = 0.42    -- the attack's follow-through (the second half of its frames)
 local LUNGE_TIME = 0.2
 local ROWS = { down = 1, up = 2, left = 3, right = 4 }
@@ -53,6 +60,7 @@ local function slimeInit(enemy, x, y, args)
     local f = FORMS[enemy.form]
     enemy.sheets = sprites.enemies.slimes[enemy.form]
     enemy.health = f.health
+    enemy.element = ELEMENTS[enemy.form]
     enemy.chase = false       -- it moves itself (enemy:aggro)
     enemy.magnitude = f.speed -- (moveLogic works out a chase direction from this all the same)
     enemy.aggroRange = 70     -- and senses the hero all around it
@@ -79,6 +87,7 @@ local function slimeInit(enemy, x, y, args)
                 self.physics:setLinearVelocity(0, 0)
                 self.aimX, self.aimY = dx / d, dy / d
                 if self.form == 2 then dj.play("sounds/items/zap.wav", "static", "effect", 0.5, 1.3) end
+                combat:glint(ex + self.aimX * 6, ey - 10, self.form == 3 and "parry" or "dodge")
             else
                 -- slimes move in little surges, quicker as they squash and stretch
                 local surge = 0.6 + 0.8 * math.abs(math.sin(self.animTime * 7))
@@ -93,8 +102,8 @@ local function slimeInit(enemy, x, y, args)
             if self.form == 3 and self.modeTime < LUNGE_TIME then
                 self.physics:setLinearVelocity(self.aimX * f.lunge, self.aimY * f.lunge)
                 if not self.bit and d < 14 then
-                    self.bit = true
-                    player:hurt(f.damage, ex, ey)
+                    local r = combat:melee(self, f.damage, ex, ey)
+                    if r == "hit" or r == "clash" then self.bit = true end
                 end
             else
                 self.physics:setLinearVelocity(0, 0)
@@ -114,20 +123,33 @@ local function slimeInit(enemy, x, y, args)
             -- a spray of water just ahead
             dj.play(sounds.enemies.projectile, "static", "effect", 0.6, 1.5)
             if distanceBetween(ex + self.aimX * 14, ey + self.aimY * 14, px, py) < 13 then
-                player:hurt(f.damage, ex, ey)
+                combat:unblockable(f.damage, ex, ey)
             end
         elseif self.form == 2 then
             -- lightning all around
             dj.play("sounds/items/zap.wav", "static", "effect", 0.9, 0.9)
             shake:start(0.12, 1.5, 0.02)
             if distanceBetween(ex, ey, px, py) < f.burst then
-                player:hurt(f.damage, ex, ey)
+                combat:unblockable(f.damage, ex, ey)
             end
         else
             -- the lunge (enemy:aggro carries it)
             self.bit = false
             dj.play(sounds.player.roll, "static", "effect", 0.9, 0.7)
         end
+    end
+
+    -- the hero's sword meets its jaws mid-lunge
+    function enemy:striking()
+        return self.form == 3 and self.mode == "strike" and self.modeTime < LUNGE_TIME
+    end
+
+    -- bonked: it's knocked back, its lunge spent
+    function enemy:onClash(dir)
+        self.mode, self.cooldown = "hop", f.cooldown
+        self.bit = true
+        self.stunTimer = 0.4
+        self.physics:setLinearVelocity(dir.x * 140, dir.y * 140)
     end
 
     function enemy:update(dt)

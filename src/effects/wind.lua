@@ -16,9 +16,11 @@ local LEAF_COLORS = { { 0.45, 0.68, 0.28 }, { 0.6, 0.76, 0.3 }, { 0.82, 0.62, 0.
 
 wind.gustTimer = 4
 
--- is the wind blowing where the player is?
+-- is the wind blowing where the player is? (It's only for the eyes: Settings
+-- can turn it off.)
 function wind:blowing()
     return gamestate == 1 and data.day >= 2 and not data.story.gulaFrozen and worldClock:outdoors()
+        and not (settings and settings.values.wind == false)
 end
 
 -- the part of the world on screen (with a margin)

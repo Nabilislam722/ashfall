@@ -9,10 +9,11 @@ shake.intensity = 0  -- Intensity of the shake (in pixels)
 shake.speed = 0      -- Duration between camera movements (in seconds)
 shake.speedTimer = 0 -- Counts down from speed in real time to change shake dir
 shake.dir = 1        -- Tracks if the camera will shift left or right
+shake.scale = 1      -- Settings: full, half or no screen shake (src/utilities/settings.lua)
 
 function shake:start(t, i, s, f, f_speed)
   shake.time = t
-  shake.intensity = i
+  shake.intensity = i * shake.scale
   shake.speed = s
   shake.speedTimer = s
   shake.fade = f or true

@@ -8,7 +8,7 @@ var __export = (target, all) => {
     __defProp(target, name, { get: all[name], enumerable: true });
 };
 
-// node_modules/abitype/dist/esm/version.js
+
 var version;
 var init_version = __esm({
   "node_modules/abitype/dist/esm/version.js"() {
@@ -16,7 +16,6 @@ var init_version = __esm({
   }
 });
 
-// node_modules/abitype/dist/esm/errors.js
 var BaseError;
 var init_errors = __esm({
   "node_modules/abitype/dist/esm/errors.js"() {

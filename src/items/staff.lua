@@ -11,7 +11,7 @@
 -- still know it as data.skills.laserStaff.)
 --
 -- staff.mana is the player's mana pool, shared by the staff and spells (the
--- F fireball, the Shift+click flame). It refills slowly on its own (REGEN per
+-- fireball (E for now), the flame). It refills slowly on its own (REGEN per
 -- second, starting a moment after mana was last used) and much faster while
 -- the staff is held to draw mana from the land. Releasing the staff spends
 -- everything in the pool.
@@ -85,8 +85,9 @@ function staff:vePower()
 end
 
 function staff:maxMana()
-    if not (data.story.manaUnlocked or data.story.rickDefeated) then return BASE_MANA end
-    return BASE_MANA + staff.manaBonus(self:vePower())
+    local spirit = progression and progression:manaBonus() or 0 -- (the Spirit attribute)
+    if not (data.story.manaUnlocked or data.story.rickDefeated) then return BASE_MANA + spirit end
+    return BASE_MANA + staff.manaBonus(self:vePower()) + spirit
 end
 
 -- spells take mana from the pool; regeneration pauses for a moment after
@@ -329,7 +330,7 @@ function staff:strike(s)
         if d <= s.radius or c.e == s.target then
             -- knocked out from the heart of the blast (the one struck square: away from the player)
             local away = d > 1 and vector(c.x - gx, c.y - gy):normalized() or vector(gx - player:getX(), gy - player:getY() + 0.01):normalized()
-            c.e:hit(s.damage * (1 - (1 - EDGE_DAMAGE) * math.min(1, d / s.radius)), away, 0.3)
+            c.e:hit(s.damage * (1 - (1 - EDGE_DAMAGE) * math.min(1, d / s.radius)), away, 0.3, nil, "lightning")
             for _ = 1, 5 do
                 local a = math.random() * math.pi * 2
                 table.insert(self.sparks, { x = c.x, y = c.y - 4, vx = math.cos(a) * 40, vy = math.sin(a) * 25 - 15,

@@ -113,7 +113,7 @@ local function drawShadowSocket(px, py)
         love.graphics.arc("line", "open", cx, cy, PANEL.socket.r * s, -math.pi / 2, -math.pi / 2 + progress * math.pi * 2)
         love.graphics.setLineWidth(1)
     end
-    panelLabel("Q", px + 53 * s, py + 32 * s, { 0.8, 0.65, 1 })
+    panelLabel(controls:label("shadowStep"), px + 53 * s, py + 32 * s, { 0.8, 0.65, 1 })
 end
 
 -- health, stamina and mana, top left
@@ -179,6 +179,17 @@ function drawBars()
     panelLabel(hpText, lx, py + 12 * s, { 1, 0.8, 0.78 })
     local amount = math.floor(staff.mana) .. "/" .. maxMana
     panelLabel(amount, lx, py + 24 * s, { 0.75, 0.88, 1 })
+    -- the level, and how far to the next (src/levels/progression.lua); a point
+    -- to spend in the Adventure Book says so
+    local level, into, need = progression:level()
+    local levelText = "Lv " .. level .. (progression:points() > 0 and "  +" or "")
+    panelLabel(levelText, lx, py + 35 * s, { 1, 0.85, 0.45 })
+    local barX, barW = lx + fonts.hudSmall:getWidth(levelText) + hudScale() * 2, 22 * hudScale()
+    love.graphics.setColor(0, 0, 0, 0.55)
+    love.graphics.rectangle("fill", barX, py + 34 * s, barW, 2 * s)
+    love.graphics.setColor(0.8, 0.62, 1, 1)
+    love.graphics.rectangle("fill", barX, py + 34 * s, barW * into / need, 2 * s)
+    setWhite()
     if maxMana > 100 then
         panelLabel("(+" .. (maxMana - 100) .. " veHEMI)", lx + fonts.hudSmall:getWidth(amount) + hudScale() * 2,
             py + 24 * s, { 0.78, 0.6, 1 })
@@ -247,7 +258,7 @@ function drawFireballKey(x, y, iconSize, hs)
     end
     love.graphics.setFont(fonts.hudGoal)
     love.graphics.setColor(0, 0, 0, 0.8)
-    local key = fireballs.KEY:upper()
+    local key = controls:label("fireball")
     love.graphics.print(key, x + iconSize * 0.62 + hs * 0.4, y + iconSize * 0.25 + hs * 0.4)
     love.graphics.setColor(1, 0.92, 0.75, 1)
     love.graphics.print(key, x + iconSize * 0.62, y + iconSize * 0.25)

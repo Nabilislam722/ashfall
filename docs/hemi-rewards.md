@@ -9,9 +9,9 @@ browser wallet (so only in the web build):
 | **On-chain saves**: checkpoints save the journey; Continue / New Game on the title screen | every checkpoint | `AshfallSaves` (ours) |
 | **Mana Well**: stake HEMI for veHEMI; veHEMI raises the Storm Staff's mana capacity | Vera's stall by the north gate, open after Rick is beaten | official veHemi |
 
-The ☰ menu in the page's top bar (`web/menu.js`; M in the game opens it too)
-connects the wallet, switches it to Hemi (adding the network if needed), and
-can switch back or disconnect later. Nova's and Vera's windows show the same
+The Wallet tab of the game's Settings (`src/ui/settingsMenu.lua`: Settings on
+the title screen, or Esc or the Settings button in play) connects the wallet,
+switches it to Hemi (adding the network if needed), and can disconnect later. Nova's and Vera's windows show the same
 wallet. Connecting works even when the game server is offline.
 
 ## Network and contracts
@@ -150,7 +150,7 @@ transactions from their wallet to the official veHemi contract: `approve`, then
 veHEMI is about `amount × lock / 4 years` and fades as the unlock date nears.
 
 The player has one mana pool, shared by the fireball (E, 20 mana), the
-Shift+click flame (10 mana) and the Storm Staff (releases everything in the
+flame (10 mana) and the Storm Staff (releases everything in the
 pool). It refills slowly on its own (4 mana per second, a little more with a
 bigger pool, after a 1.2 second pause) and much faster while the staff is held.
 Its capacity is
@@ -298,11 +298,12 @@ Ownership moves in two steps (`transferOwnership` + `acceptOwnership`), and
 | `cloudflare/hemiRewards.js` | Worker API: challenge, limits from the on-chain save, voucher signing |
 | `cloudflare/ledger.js` | The exchange ledger (Durable Object): sign-ins and every balance |
 | `web/bridge.js` | Wallet, exchange, saves and staking in the page, polled from Lua |
-| `web/menu.js` | ☰ menu in the page's top bar |
+| `web/fullscreen.js` | The page's fullscreen, for the game's Settings |
 | `src/utilities/webBridge.lua` | Lua side of the bridge |
 | `src/utilities/onchain.lua` | Runs the game's on-chain requests one at a time |
 | `src/levels/saveState.lua` | Save snapshots, validation, device and on-chain saving |
-| `src/ui/menu.lua` | Title screen: Continue / New Game |
+| `src/ui/menu.lua` | Title screen: Continue / New Game, Fullscreen, Settings |
+| `src/ui/settingsMenu.lua` | Settings: the game's settings, the keys, the wallet |
 | `src/ui/hemiExchange.lua` | Nova's exchange window |
 | `src/ui/manaWell.lua` | Vera's staking window |
 | `src/items/staff.lua` | Storm Staff, mana capacity from veHEMI |

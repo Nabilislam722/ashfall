@@ -401,14 +401,12 @@ function spawnGula(x, y, arena)
         end
         -- standing in it burns (rolling or Shadow Step slips through), until it
         -- thins to a thread
-        if not b.hit and b.t > 0.04 and b.life - b.t > BEAM_FADE * 2 / 3 and player.state ~= 0.5
-            and player.shadowInvuln <= 0 and not isPlayerFrozen() and player.damagedTimer <= 0 then
+        if not b.hit and b.t > 0.04 and b.life - b.t > BEAM_FADE * 2 / 3 then
             local grow = self:beamGrowth()
             local d, cx, cy = toSegment(player:getX(), player:getY(), b.x1, b.y1,
                 b.x1 + (b.x2 - b.x1) * grow, b.y1 + (b.y2 - b.y1) * grow)
-            if d < b.width * 0.5 + 4 then
+            if d < b.width * 0.5 + 4 and combat:unblockable(self:value(1, 1.5), cx, cy, true) == "hit" then
                 b.hit = true
-                player:hurt(self:value(1, 1.5), cx, cy, true)
             end
         end
         if b.t >= b.life then
@@ -557,9 +555,8 @@ function spawnGula(x, y, arena)
             o.x, o.y = o.x + o.vx * dt, o.y + o.vy * dt
             o.life = o.life - dt
             local gone = o.life <= 0 or #world:queryCircleArea(o.x, o.y, 2, {'Wall'}) > 0
-            if not gone and not isPlayerFrozen() and player.damagedTimer <= 0 and not player:untouchable()
-                and distanceBetween(o.x, o.y, player:getX(), player:getY()) < 7 then
-                player:hurt(hurtBy, o.x - o.vx, o.y - o.vy, true)
+            if not gone and distanceBetween(o.x, o.y, player:getX(), player:getY()) < 7
+                and combat:unblockable(hurtBy, o.x - o.vx, o.y - o.vy, true) == "hit" then
                 gone = true
             end
             if gone then
@@ -591,12 +588,11 @@ function spawnGula(x, y, arena)
                     dj.play("sounds/enemies/gulaNova.wav", "static", "effect", 0.55, 1.25)
                 end
                 r.r = r.r + r.speed * dt
-                if not r.hit and player.state ~= 0.5 and player.shadowInvuln <= 0 and not isPlayerFrozen() and player.damagedTimer <= 0 then
+                if not r.hit then
                     -- the wave is a flat ellipse on the floor: it hits where it is drawn
                     local dx, dy = player:getX() - r.x, (player:getY() - r.y) / NOVA_SQUASH
-                    if math.abs(math.sqrt(dx * dx + dy * dy) - r.r) < 5 then
+                    if math.abs(math.sqrt(dx * dx + dy * dy) - r.r) < 5 and combat:unblockable(hurtBy, r.x, r.y, true) == "hit" then
                         r.hit = true
-                        player:hurt(hurtBy, r.x, r.y, true)
                     end
                 end
                 if r.r > r.max then table.remove(self.rings, i) end
@@ -707,9 +703,9 @@ function spawnGula(x, y, arena)
         elseif s == "dash" then
             self.timer = self.timer - dt
             self.physics:setLinearVelocity(self.vx, self.vy)
-            if not self.dashHit and not isPlayerFrozen() and distanceBetween(self.x, self.y, player:getX(), player:getY()) < 18 then
+            if not self.dashHit and distanceBetween(self.x, self.y, player:getX(), player:getY()) < 18
+                and combat:unblockable(self:value(1, 1.5), self.x, self.y, true) ~= "evaded" then
                 self.dashHit = true
-                player:hurt(self:value(1, 1.5), self.x, self.y, true)
             end
             if self.timer <= 0 or self.physics:enter('Wall') then
                 self.physics:setLinearVelocity(0, 0)

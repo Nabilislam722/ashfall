@@ -17,7 +17,7 @@ local ITEMS = { sword = true, bow = true, boomerang = true, bomb = true, grapple
 local STORY = {
     villageIntro = "bool", rickDefeated = "bool", foodSaved = "int", heartCharm = "bool",
     rickLosses = "int", masterHinted = "bool", manaUnlocked = "bool", guildIntro = "bool", gulaFrozen = "bool",
-    rickTalked = "bool", rickTalkDay = "day", guildHinted = "bool",
+    rickTalked = "bool", rickTalkDay = "day", guildHinted = "bool", bookGiven = "bool",
 }
 local SKILLS = { shadowStep = true, laserStaff = true }
 local MAX_LIST = 400
@@ -78,6 +78,10 @@ function saveState:snapshot(mapName, x, y)
         breakables = setToList(data.breakables),
         day = data.day,
         clock = math.floor(data.clock * 1000 + 0.5) / 1000,
+        xp = data.xp,
+        stats = data.stats,
+        visited = setToList(data.visited),
+        journal = { seen = setToList(data.journal.seen), done = setToList(data.journal.done), tracked = data.journal.tracked },
         t = os.time(),
     }
 end
@@ -149,6 +153,21 @@ function saveState:apply(save)
         if n > 0 then data.bag[id] = n end
     end
 
+    -- the level and its points (spent points can't be more than the levels earned)
+    data.xp = int(save.xp, 0, 9999999, 0)
+    local stats = type(save.stats) == "table" and save.stats or {}
+    local budget = progression:level() - 1
+    for _, s in ipairs(progression.STATS) do
+        local n = math.min(int(stats[s.id], 0, s.max, 0), budget)
+        data.stats[s.id] = n
+        budget = budget - n
+    end
+    data.visited = listToSet(save.visited)
+    local journal = type(save.journal) == "table" and save.journal or {}
+    data.journal.seen = listToSet(journal.seen)
+    data.journal.done = listToSet(journal.done)
+    if type(journal.tracked) == "string" and quests:get(journal.tracked) then data.journal.tracked = journal.tracked end
+
     data.chests = listToSet(save.chests)
     data.defeated = listToSet(save.defeated)
     data.checkpoints = listToSet(save.checkpoints)
@@ -158,6 +177,8 @@ function saveState:apply(save)
     local x, y = tonumber(save.x), tonumber(save.y)
     if x and y and (x < 0 or y < 0 or x > 20000 or y > 20000) then x, y = nil, nil end
     data.map = save.map
+    data.visited[save.map] = true
+    progression:apply() -- (the attributes at work)
     return save.map, x, y
 end
 
@@ -204,7 +225,7 @@ function saveState:saveNow(onChainDone)
     end
 
     if onchain:available() and onchain.remote.saves == "1" then
-        showToast("Saved on this device. Connect a wallet (Menu) to save on-chain.", 4)
+        showToast("Saved on this device. Connect a wallet in Settings (Esc) to save on-chain.", 4)
     else
         showToast("Game saved", 2)
     end

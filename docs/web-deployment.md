@@ -18,10 +18,10 @@ downloads the pinned LÖVE 11.5 runtime files into `web/`.
 
 Both commands also stamp a new build number (`?b=`) onto the style and script
 links in `web/index.html`, so browsers fetch the new page files after a
-deploy. Always deploy the whole `web/` folder, not only `game.love`: the ☰ menu
-lives in the page's top bar (`index.html`, `style.css`, `menu.js`,
-`bridge.js`). If an older page without that menu is served, the game draws its
-own ☰ in the top-right corner of the canvas instead.
+deploy. Always deploy the whole `web/` folder, not only `game.love`: the page
+(`index.html`, `style.css`, `fullscreen.js`, `bridge.js`) is just the canvas,
+filling the window; the wallet and everything else are in the game's own
+Settings.
 
 The script pins the upstream `love.js` commit in its `LoveJsRef` parameter. A
 runtime update can be tested explicitly with `-LoveJsRef <commit>`.
@@ -120,8 +120,11 @@ the generated Lua map is what the game loads at runtime.
 
 - `conf.lua` uses a fixed 1920x1080 logical window and disables LÖVE window
   resizing, while CSS scales the canvas responsively.
-- Desktop fullscreen and quit actions are skipped when
-  `love.system.getOS() == "Web"`.
+- Desktop fullscreen (F11 / Backspace) and quit actions are skipped when
+  `love.system.getOS() == "Web"`. In the browser, fullscreen is the page's:
+  the title screen's and Settings' Fullscreen ask `window.ashfallFullscreen`
+  in `web/fullscreen.js` (the Fullscreen API on the whole page; Esc leaves it,
+  so in fullscreen the Settings button, top right, opens Settings).
 - Save files continue to use `love.filesystem`; `love.js` persists them in
   browser IndexedDB.
 - Asset references are package-relative paths, so they remain valid inside the

@@ -87,7 +87,7 @@ end
 function onchain:update(dt)
     if not self:available() then return end
     local active = self.task or #self.queue > 0 or self.remote.state == "working" or gamestate == 0
-        or (hemiExchange and hemiExchange.active) or (topMenu and topMenu.open) or (manaWell and manaWell.active)
+        or (hemiExchange and hemiExchange.active) or (settingsMenu and settingsMenu.active) or (manaWell and manaWell.active)
     if active and self.pollTimer > ACTIVE_POLL then self.pollTimer = ACTIVE_POLL end
     self.pollTimer = self.pollTimer - dt
     if self.pollTimer > 0 then return end

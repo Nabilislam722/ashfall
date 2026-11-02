@@ -360,7 +360,7 @@ function villageStory:playIntro()
     end, function()
         data.story.villageIntro = true
         objective = OBJECTIVE
-        showToast("Press E near villagers to talk and trade", 4)
+        showToast(controls:fill("Press {interact} near villagers to talk and trade"), 4)
     end)
 end
 
@@ -429,13 +429,13 @@ function villageStory:teachShadowStep(juan)
         opener,
         line("Master Juan", "Close your eyes. Feel the shadow under your feet... and step into it."),
         line("Master Juan", "The Shadow Step carries you a short way in an instant. Claws, crumbs and shockwaves pass right through you."),
-        line("Master Juan", "Walls will still stop you, and it needs a breath to recharge. Press Q, and go."),
+        line("Master Juan", "Walls will still stop you, and it needs a breath to recharge. Press " .. controls:label("shadowStep") .. ", and go."),
     }, function()
         data.skills.shadowStep = true
         player.shadowCooldown = 0
         player:gotItem(sprites.items.shadowStep)
         dj.play(sounds.items.chest, "static", "effect")
-        showToast("Learned Shadow Step!  Press Q to dash through danger", 4.5)
+        showToast(controls:fill("Learned Shadow Step!  Press {shadowStep} to dash through danger"), 4.5)
         objective = currentObjective()
     end)
 end
@@ -865,6 +865,25 @@ end
 
 ----------------------------------------------------------------------- talking
 
+-- the first word with Mira at the Adventurers' Guild: every adventurer gets a
+-- book (src/ui/book.lua)
+function villageStory:giveBook(mira)
+    local lines = {
+        line("Mira", "A new face! Welcome to the Adventurers' Guild of Willowbrook. I'm Mira."),
+        line("Mira", "Every guild member carries one of these: an Adventure Book. Your quests, the places you've been, how strong you've grown... it keeps it all."),
+        line("Mira", controls:fill("Open it with {book}. And bring me monster ears and gems - the guild pays for them.")),
+    }
+    if not data.story.rickDefeated then
+        table.insert(lines, line("Mira", "Not that anyone's taking jobs while that glutton runs riot in the plaza. Deal with him first!"))
+    end
+    dialogue:start(lines, function()
+        data.story.bookGiven = true
+        player:gotItem(sprites.items.adventureBook)
+        dj.play(sounds.items.chest, "static", "effect")
+        showToast(controls:fill("Got the Adventure Book!  Press {book} to open it"), 4.5)
+    end)
+end
+
 function villageStory:talk(npc)
     local s = data.story
     local won = s.rickDefeated
@@ -912,7 +931,9 @@ function villageStory:talk(npc)
     elseif role == "hemi" then
         hemiExchange:open()
     elseif role == "guild" then
-        if not won then
+        if not s.bookGiven then
+            self:giveBook(npc)
+        elseif not won then
             dialogue:start({
                 line("Mira", "Welcome to the Adventurers' Guild... or it would be, if anyone dared to work while that glutton runs riot in the plaza."),
                 line("Mira", "Deal with him first, then come back and we'll talk business."),
@@ -1003,7 +1024,11 @@ end
 function villageStory:update(dt)
     if not self.active or pause.active then return end
 
-    if self.rick then self.rick:update(dt) end
+    local rick = self.rick
+    if rick then
+        rick:update(combat:slowIn(rick, dt)) -- (slowed for a while when dodged perfectly)
+        combat:slowOut(rick)
+    end
 
     -- while his story goes on, Rick wants to talk; afterwards he trades snacks
     local rickNpc = npcs:find("Rick")

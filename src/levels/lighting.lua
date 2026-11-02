@@ -51,9 +51,10 @@ function loadLighting(map)
     end
 end
 
--- how dark it is right now: the map's own darkness, or night outdoors
+-- how dark it is right now: the map's own darkness, or night outdoors (softer
+-- if the player has asked for it in Settings)
 function lighting:level()
-    return math.max(self.ambient, worldClock:darkness())
+    return math.max(self.ambient, worldClock:darkness()) * (settings and settings.values.darkness or 1)
 end
 
 function lighting:active()
@@ -85,6 +86,7 @@ function lighting:sources()
         local surge = rick.aura and rick.aura.surging or 0
         table.insert(list, { x = rick.x, y = rick.y - 12, radius = 62 + 70 * strike + 24 * surge, color = { 0.55, 0.82, 1 }, strength = 1 })
     end
+    if roamingBoss then roamingBoss:addLights(list) end -- the Demon General and his hellfire
     if lairStory and lairStory.gula then
         local g = lairStory.gula
         local color = g.frozen and { 0.6, 0.85, 1 } or g.berserk and { 1, 0.2, 0.2 } or { 0.75, 0.3, 1 }

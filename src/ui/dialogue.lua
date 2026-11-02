@@ -64,7 +64,8 @@ function dialogue:advance()
 end
 
 function dialogue:keypressed(key)
-    if key == "space" or key == "e" or key == "return" or key == "kpenter" or key == "z" or key == "x" then
+    if key == "space" or key == "e" or key == "return" or key == "kpenter" or key == "z" or key == "x"
+        or controls:is("interact", key) then -- (the key that started the talk moves it on, whatever it is)
         self:advance()
     end
 end

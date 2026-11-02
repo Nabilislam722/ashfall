@@ -1,5 +1,22 @@
 enemies = {}
 
+-- Elements. A monster can be made of one (enemy.element: the slimes are water,
+-- lightning and fire): an attack of its own element does it no harm at all, and
+-- an attack of the opposite element does double. The hero's attacks: the
+-- Fireball and the flame are fire, the Storm Staff's bolt is lightning;
+-- the sword, arrows and bombs have no element.
+ELEMENT_OPPOSITE = { fire = "water", water = "fire", lightning = "earth", earth = "lightning" }
+ELEMENT_WEAKNESS = 2
+
+-- what an attack of `element` does to something made of `made`:
+-- damage, and "immune" or "weak" (or nil when the elements don't meet)
+function elementalDamage(made, damage, element)
+    if not made or not element then return damage end
+    if made == element then return 0, "immune" end
+    if ELEMENT_OPPOSITE[made] == element then return damage * ELEMENT_WEAKNESS, "weak" end
+    return damage
+end
+
 function spawnEnemy(x, y, type, args)
 
     local enemy = {}
@@ -19,6 +36,8 @@ function spawnEnemy(x, y, type, args)
     enemy.burningTimer = 0
     enemy.burningCounter = 0 -- how many remaining burn procs
     enemy.emberTimer = 0
+    enemy.element = nil       -- what it's made of (see ELEMENT_OPPOSITE)
+    enemy.elementTextTimer = 0
 
     enemy.hookable = true
     enemy.hookVec = nil
@@ -230,6 +249,7 @@ function spawnEnemy(x, y, type, args)
 
     -- This update function is the same for all enemies, regardless of type
     function enemy:genericUpdate(dt)
+        if self.elementTextTimer > 0 then self.elementTextTimer = self.elementTextTimer - dt end
         if self.flashTimer > 0 then
             self.flashTimer = self.flashTimer - dt
             if self.flashTimer < 0 then
@@ -280,7 +300,28 @@ function spawnEnemy(x, y, type, args)
         self:wanderUpdate(dt)
     end
 
-    function enemy:hit(damage, dir, stun, dizziness)
+    -- "IMMUNE" or "WEAK!" over its head, now and then (a flame hits many times a second)
+    function enemy:elementText(verdict)
+        if self.elementTextTimer > 0 or not self.physics then return end
+        self.elementTextTimer = 0.6
+        local ex, ey = self.physics:getPosition()
+        if verdict == "immune" then
+            floatTexts:spawn(ex, ey - 16, "IMMUNE", {0.75, 0.78, 0.85}, { life = 0.8 })
+        else
+            floatTexts:spawn(ex, ey - 16, "WEAK!", {1, 0.75, 0.2}, { life = 0.8 })
+        end
+    end
+
+    function enemy:hit(damage, dir, stun, dizziness, element)
+        local verdict
+        damage, verdict = elementalDamage(self.element, damage, element)
+        if verdict then self:elementText(verdict) end
+        if verdict == "immune" then
+            -- its own element washes over it: no harm, no knockback
+            self.flashTimer = 0
+            dj.play("sounds/items/fizzle.wav", "static", "effect", 0.5, 1.4)
+            return
+        end
         self.health = self.health - damage
         self.stunTimer = stun
         local mag = 200
@@ -308,6 +349,7 @@ function spawnEnemy(x, y, type, args)
     end
 
     function enemy:burn()
+        if self.element == "fire" then return end -- fire doesn't burn fire
         self.burningTimer = 1
         self.burningCounter = 5
         self.emberTimer = 0.1
@@ -333,10 +375,13 @@ end
 
 function enemies:update(dt)
 
-    -- Calls update functions on all enemies
+    -- Calls update functions on all enemies (each in its own time: one dodged
+    -- perfectly is slowed, src/utilities/combat.lua)
     for i,e in ipairs(self) do
-        e:update(dt)
-        e:genericUpdate(dt)
+        local edt = combat:slowIn(e, dt)
+        e:update(edt)
+        e:genericUpdate(edt)
+        combat:slowOut(e)
     end
   
     enemies:destroyDead()
@@ -388,6 +433,7 @@ function enemies:destroyDead()
                 local ex, ey = enemies[i].physics:getPosition()
                 mobLoot:drop(enemies[i], ex, ey)
             end
+            if progression then progression:killed(enemies[i]) end -- (XP)
             if enemies[i].spawner then
                 enemies[i].spawner.alive = math.max(0, enemies[i].spawner.alive - 1)
             end

@@ -1,5 +1,6 @@
 function updateAll(dt)
     onchain:update(dt)
+    menu:update(dt) -- (the title screen's backdrop and embers)
 
     --if pause.active == false then
         updateGame(dt)
@@ -14,6 +15,16 @@ end
 
 function updateGame(dt)
     miscUpdate(dt)
+    -- Settings open: the world waits (src/ui/settingsMenu.lua)
+    if settingsMenu.active then
+        settingsMenu:update(dt)
+        return
+    end
+    -- the Adventure Book open: the world waits (src/ui/book.lua)
+    if book.active then
+        book:update(dt)
+        return
+    end
     if globalStun > 0 then return end
 
     flux.update(dt)
@@ -26,6 +37,7 @@ function updateGame(dt)
     walls:update(dt)
     blasts:update(dt)
     effects:update(dt)
+    combat:update(dt)
     waters:update(dt)
     chests:update(dt)
     arrows:update(dt)
@@ -45,6 +57,7 @@ function updateGame(dt)
     checkpoints:update(dt)
     villageStory:update(dt)
     lairStory:update(dt)
+    roamingBoss:update(dt)
     worldClock:update(dt)
     wind:update(dt)
     villageDecor:update(dt)
@@ -55,6 +68,7 @@ function updateGame(dt)
     shop:update(dt)
     hemiExchange:update(dt)
     floatTexts:update(dt)
+    quests:update(dt) -- quests coming in and finished (src/levels/quests.lua)
     updateToast(dt)
     respawn:update(dt)
 

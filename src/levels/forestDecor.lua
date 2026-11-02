@@ -92,8 +92,8 @@ local BOUNDS = ""
 
 -- the collider for a picture of `kind` whose pixels cover x0, y0, w, h, or nil:
 -- what really stands in the way, where it's drawn (a tree's trunk where it
--- meets the roots, the body of a stump or a boulder; ruins have their own,
--- RUINS below); bushes,
+-- meets the roots, the body of a stump; ruins and boulders have their own,
+-- RUINS and BOULDERS below); bushes,
 -- small stones, mushrooms and reeds can be walked through
 local function collider(kind, x0, y0, w, h)
     local bottom, cx = y0 + h, x0 + w / 2
@@ -139,21 +139,44 @@ local RUINS = {
     { at = { 8, 24 }, tiles = { 776, 777, 808, 809 },
       boxes = { { 4, 19, 25, 10 } } },
 }
-local RUIN_OF = {}
+-- boulders stand on their bases: a few boxes stacked down each rock's lower
+-- half, each as wide as the rock is there (measured on the sheet), so the grass
+-- or the shadow round a boulder can be walked on; the same layout as RUINS
+local BOULDERS = {
+    -- big, middling and small, in the grass
+    { at = { 21, 11 }, tiles = { 373, 374, 375, 376, 405, 406, 407, 408, 437, 438, 439, 440, 469, 470, 471, 472 },
+      boxes = { { 11, 22, 44, 11 }, { 14, 33, 41, 11 }, { 18, 44, 31, 11 } } },
+    { at = { 25, 11 }, tiles = { 377, 378, 379, 409, 410, 411, 441, 442, 443 },
+      boxes = { { 11, 16, 28, 8 }, { 10, 24, 29, 8 }, { 12, 32, 26, 8 } } },
+    { at = { 28, 11 }, tiles = { 380, 381, 382, 412, 413, 414, 444, 445, 446 },
+      boxes = { { 12, 17, 24, 9 }, { 13, 26, 23, 8 } } },
+    -- and with their shadows
+    { at = { 21, 15 }, tiles = { 501, 502, 503, 504, 533, 534, 535, 536, 565, 566, 567, 568, 597, 598, 599, 600 },
+      boxes = { { 11, 22, 44, 11 }, { 14, 33, 41, 11 }, { 15, 44, 35, 11 } } },
+    { at = { 25, 15 }, tiles = { 505, 506, 507, 537, 538, 539, 569, 570, 571 },
+      boxes = { { 11, 16, 28, 8 }, { 10, 24, 29, 8 }, { 10, 32, 28, 8 } } },
+    { at = { 28, 15 }, tiles = { 508, 509, 510, 540, 541, 542, 572, 573, 574 },
+      boxes = { { 12, 17, 24, 9 }, { 12, 26, 24, 8 } } },
+}
+
+local RUIN_OF, BOULDER_OF = {}, {}
 for _, ruin in ipairs(RUINS) do
     for _, id in ipairs(ruin.tiles) do RUIN_OF[id] = ruin end
 end
+for _, boulder in ipairs(BOULDERS) do
+    for _, id in ipairs(boulder.tiles) do BOULDER_OF[id] = boulder end
+end
 
--- a ruin's boxes on the map, if this picture is one
-local function ruinBoxes(cells, tw, th)
+-- a shaped piece's boxes on the map (a ruin's, a boulder's), if this picture is one
+local function shapedBoxes(cells, tw, th, shapeOf)
     for _, c in ipairs(cells) do
-        local ruin = RUIN_OF[c.id]
-        if ruin then
+        local shape = shapeOf[c.id]
+        if shape then
             local ox = (c.x - 1) * tw - (c.id % COLUMNS) * tw
             local oy = (c.y - 1) * th - math.floor(c.id / COLUMNS) * th
             local boxes = {}
-            for _, b in ipairs(ruin.boxes) do
-                table.insert(boxes, { ruin.at[1] * tw + b[1] + ox, ruin.at[2] * th + b[2] + oy, b[3], b[4] })
+            for _, b in ipairs(shape.boxes) do
+                table.insert(boxes, { shape.at[1] * tw + b[1] + ox, shape.at[2] * th + b[2] + oy, b[3], b[4] })
             end
             return boxes
         end
@@ -222,20 +245,33 @@ function forestDecor:add(map, sheet, cells)
         if has[k] then kind = k break end
     end
     local x0, y0, w, h = minX, minY, maxX - minX, maxY - minY
-    local prop = { image = sheet.image, cells = {}, kind = kind, x = x0, y = y0, w = w, h = h, sortY = maxY - 3 }
+    -- (with no box to stand on, a bush, mushrooms, reeds or a small stone sorts at its middle)
+    local prop = { image = sheet.image, cells = {}, kind = kind, x = x0, y = y0, w = w, h = h, sortY = y0 + h / 2 }
     for _, c in ipairs(cells) do
         table.insert(prop.cells, { quad = c.quad, x = (c.x - 1) * tw, y = (c.y - 1) * th })
     end
-    local boxes = ruinBoxes(cells, tw, th)
-    if not boxes then
-        local cx, cy, cw, ch = collider(kind, x0, y0, w, h)
-        boxes = cx and { { cx, cy, cw, ch } } or {}
+    local boxes = shapedBoxes(cells, tw, th, RUIN_OF)
+    local ruin = boxes ~= nil
+    if not ruin then
+        boxes = shapedBoxes(cells, tw, th, BOULDER_OF)
+        if not boxes then
+            local cx, cy, cw, ch = collider(kind, x0, y0, w, h)
+            boxes = cx and { { cx, cy, cw, ch } } or {}
+        end
     end
-    -- it sorts at the foot of its lowest box
+    -- it sorts along the top of its (topmost) box, so whoever stands beside it
+    -- is drawn in front of it, its leaves and the grass round its foot, and
+    -- whoever is above it (behind the trunk, the rock) behind; half a pixel
+    -- down, as the hero pressed against its back sinks into the box a hair. A
+    -- ruin sorts at the foot of its lowest stone.
     for i, b in ipairs(boxes) do
         local wall = spawnWall(b[1], b[2], b[3], b[4])
         if wall then wall.scenery = true end
-        prop.sortY = i == 1 and b[2] + b[4] or math.max(prop.sortY, b[2] + b[4])
+        if ruin then
+            prop.sortY = i == 1 and b[2] + b[4] or math.max(prop.sortY, b[2] + b[4])
+        else
+            prop.sortY = i == 1 and b[2] + 0.5 or math.min(prop.sortY, b[2] + 0.5)
+        end
     end
     table.insert(self.props, prop)
 end

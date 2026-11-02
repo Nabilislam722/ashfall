@@ -10,7 +10,6 @@
 -- charge stops growing; rolled out of, or knocked down by a boss, it fizzles.
 
 fireballs = {}
-fireballs.KEY = "e"            -- the key that casts it (main.lua: E talks to anyone close by first)
 fireballs.COST = 20
 fireballs.COOLDOWN = 0.35
 fireballs.CHARGE_DELAY = 0.15  -- held longer than this, it starts to charge (a tap is a plain fireball)
@@ -65,7 +64,7 @@ local function explode(ball, directHit)
     local s = ball.stats
     burst(ball.x, ball.y, ball.power)
     if directHit then
-        directHit:hit(s.direct, ball.dirVec, s.knock)
+        directHit:hit(s.direct, ball.dirVec, s.knock, nil, "fire")
         if directHit.burn then directHit:burn() end
     end
     for _, collider in ipairs(world:queryCircleArea(ball.x, ball.y, s.radius, { 'Enemy' })) do
@@ -74,7 +73,7 @@ local function explode(ball, directHit)
             local tx, ty = collider:getPosition()
             local away = vector(tx - ball.x, ty - ball.y)
             if away:len() < 0.01 then away = ball.dirVec end
-            target:hit(s.splash, away:normalized(), 0.08 + 0.1 * ball.power)
+            target:hit(s.splash, away:normalized(), 0.08 + 0.1 * ball.power, nil, "fire")
             -- a full charge sets the whole blast alight
             if ball.power >= 0.999 and target.burn then target:burn() end
         end
@@ -221,7 +220,7 @@ function fireballs:updateCharge(dt)
     end
     c.dir = toMouseVector(player:getX(), player:getY() - 2)
     -- let go: it flies
-    if not love.keyboard.isDown(self.KEY) then
+    if not controls:down("fireball") then -- (its key: src/utilities/controls.lua; main.lua talks to anyone close by first)
         self.charge = nil
         stopHum()
         launch(c)

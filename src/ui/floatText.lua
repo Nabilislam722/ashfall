@@ -50,9 +50,23 @@ function floatTexts:draw()
     setWhite()
 end
 
-toast = { text = nil, timer = 0, life = 0 }
+toast = { text = nil, timer = 0, life = 0, queue = {} }
+local TOAST_TURN = 2.2 -- a toast shows this long before the next in line takes its place
 
+-- one at a time: a toast that comes while another is still fresh waits its
+-- turn (so "Quest complete" isn't wiped out by the level-up it brings)
 function showToast(text, duration)
+    if toast.text == text then
+        toast.timer = toast.life
+        return
+    end
+    if toast.text and toast.life - toast.timer < TOAST_TURN then
+        for _, waiting in ipairs(toast.queue) do
+            if waiting.text == text then return end
+        end
+        if #toast.queue < 3 then table.insert(toast.queue, { text = text, duration = duration }) end
+        return
+    end
     toast.text = text
     toast.life = duration or 3
     toast.timer = toast.life
@@ -61,9 +75,14 @@ end
 objective = nil -- short text shown under the HUD while a quest is active
 
 function updateToast(dt)
-    if toast.timer > 0 then
-        toast.timer = toast.timer - dt
-        if toast.timer <= 0 then toast.text = nil end
+    if toast.timer > 0 then toast.timer = toast.timer - dt end
+    if #toast.queue > 0 and (toast.timer <= 0 or toast.life - toast.timer >= TOAST_TURN) then
+        local nextUp = table.remove(toast.queue, 1)
+        toast.text = nextUp.text
+        toast.life = nextUp.duration or 3
+        toast.timer = toast.life
+    elseif toast.timer <= 0 then
+        toast.text = nil
     end
 end
 
@@ -87,11 +106,14 @@ function drawToastAndObjective()
         love.graphics.setLineWidth(1)
     end
 
-    if objective then
+    -- the Goal: the tracked quest's next step (src/levels/quests.lua), or a
+    -- story's own objective
+    local goal = (quests and quests:goal()) or objective
+    if goal then
         local font = fonts.hudGoal
         local hs = hudScale()
         love.graphics.setFont(font)
-        local text = "Goal: " .. objective
+        local text = "Goal: " .. goal
         local ox, oy = 6, hudBottomY() + 2 * hs
         love.graphics.setColor(0, 0, 0, 0.55)
         love.graphics.rectangle("fill", ox, oy, font:getWidth(text) + 4 * hs, font:getHeight() + hs, hs * 0.5, hs * 0.5)
