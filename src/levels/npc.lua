@@ -344,7 +344,7 @@ function npcs:drawOverlay()
     if not n or pause.active then return end
     local sx, sy = cam:cameraCoords(n.x, n.y - n.height - 4)
     local label = n.talkLabel or "Talk"
-    local text = "[E] " .. label
+    local text = "[" .. controls:label("interact") .. "] " .. label
     love.graphics.setFont(fonts.float)
     local tw = fonts.float:getWidth(text) + 3 * scale
     local th = fonts.float:getHeight() + scale

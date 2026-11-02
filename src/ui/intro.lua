@@ -15,7 +15,7 @@
 intro = { active = false }
 
 local MUSIC = "sounds/music/Lavender_Dome.mp3"
-local MUSIC_VOLUME = 0.8
+local MUSIC_VOLUME = 0.8 -- (times the player's music volume: src/utilities/settings.lua)
 local MUSIC_END = 90      -- the track runs 1:30: played through, the intro leaves it playing
                           -- on into the game, fading out to end there (skipped, it goes too)
 local FADE = 1.6          -- a shot dissolving into the next
@@ -31,6 +31,7 @@ local FONT_FUTURE = "fonts/kenney_fontpackage/Fonts/Kenney Future.ttf"
 local FONT_VT = "fonts/vt323/VT323-Regular.ttf"
 
 local function clamp01(v) return math.max(0, math.min(1, v)) end
+local function musicLevel() return MUSIC_VOLUME * (settings and settings.values.music or 1) end
 local function lerp(a, b, t) return a + (b - a) * t end
 local function smooth(t) t = clamp01(t); return t * t * (3 - 2 * t) end
 local function easeOut(t) t = clamp01(t); return 1 - (1 - t) * (1 - t) end
@@ -712,6 +713,14 @@ local function restoreDecor()
     spawnWall = realSpawnWall
 end
 
+-- a map drawn whole into a canvas, for the title screen's backdrop
+-- (src/ui/menu.lua): { canvas, lights } (or { failed = true })
+function intro:bakeMap(name)
+    local baked = bake(name)
+    restoreDecor()
+    return baked
+end
+
 ----------------------------------------------------------------------- running it
 
 local function newFlake(anywhere)
@@ -781,7 +790,7 @@ function intro:update(dt)
         if self.music then
             self.t = self.t + dt
             local left = 1 - clamp01((self.t - self.tailStart) / (MUSIC_END - 0.3 - self.tailStart))
-            self.music:setVolume(self.musicVolume * left * left)
+            self.music:setVolume(musicLevel() * left * left)
             if left <= 0 or not self.music:isPlaying() then self:stopMusic() end
         end
         return
@@ -819,7 +828,7 @@ function intro:update(dt)
 
     if not self.ending and self.t >= TOTAL - END_FADE then self.ending, self.endTime = 0, END_FADE end
     if self.ending then self.ending = self.ending + dt end
-    self.musicVolume = MUSIC_VOLUME * span(self.t, 0, 0.6)
+    self.musicVolume = musicLevel() * span(self.t, 0, 0.6)
     if self.music then
         -- (skipped: the music fades with the picture)
         local going = self.skipped and clamp01(self.ending / self.endTime) or 0

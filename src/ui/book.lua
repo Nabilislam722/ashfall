@@ -13,7 +13,7 @@
 --   Inventory  supplies, monster loot for the guild, arms and skills
 --
 -- Keys: left/right (A/D, Tab) turn the page, up/down (W/S) choose, Enter or
--- Space acts (spend a point, track a quest), 1-4 jump to a bookmark, B or Esc
+-- Space acts (spend a point, track a quest), 1-4 jump to a bookmark, B (its key) or Esc
 -- closes. The mouse works on everything.
 
 book = { active = false, state = nil, tab = 1, statSel = 1 }
@@ -355,7 +355,7 @@ function book:drawJournal()
         y = y + 1
     end
 
-    local reward = "Reward: +" .. (q.xp or 0) .. " XP" .. (q.reward and ("  -  " .. q.reward) or "")
+    local reward = "Reward: +" .. (q.xp or 0) .. " XP" .. (q.reward and ("  -  " .. controls:fill(q.reward)) or "")
     local footY = done and (R.y + R.h) or (R.y + 136)
     write(reward, R.x, math.max(y + 1, footY - height(reward, F.small, R.w)), F.small, GREEN, R.w)
     if not done then
@@ -516,8 +516,8 @@ function book:drawBag()
 
     write("Arms", R.x, R.y, F.title, INK)
     local arms = {
-        { "Left click", data.item.left }, { "Right click", data.item.right }, { "R", data.item.altL },
-        { fireballs and fireballs.KEY:upper() or "E", "fireball" },
+        { "Left click", data.item.left }, { "Right click", data.item.right },
+        { controls:label("fireball"), "fireball" },
     }
     y = R.y + 13
     for _, a in ipairs(arms) do
@@ -530,7 +530,7 @@ function book:drawBag()
     write("Skills", R.x, y, F.title, INK)
     y = y + 13
     local skills = {
-        { "Shadow Step", data.skills.shadowStep, "Space: dash through danger", "Master Juan teaches it" },
+        { "Shadow Step", data.skills.shadowStep, controls:label("shadowStep") .. ": dash through danger", "Master Juan teaches it" },
         { "Storm Staff", data.skills.laserStaff, "Elder Mara's staff", "-" },
         { "Mana Well", data.story.manaUnlocked or data.story.rickDefeated, "veHEMI deepens your mana", "Opens once Willowbrook is safe" },
     }
@@ -728,9 +728,9 @@ end
 
 function book:keypressed(key)
     if not self.active or self.state == "closing" or self.state == "sinking" then return end
-    if key == "b" or key == "escape" then return self:close() end
+    if controls:is("book", key) or key == "escape" then return self:close() end
     if self.state == "rising" or self.state == "opening" or self.state == "riffle" then return self:hurry() end
-    if key == "j" then return self:goTo("journal") end
+    if controls:is("journal", key) then return self:goTo("journal") end
     local n = tonumber(key)
     if n and TABS[n] then return self:go(n) end
     if key == "right" or key == "d" or key == "tab" then return self:go(self.tab % #TABS + 1) end
@@ -850,7 +850,7 @@ function book:draw()
 
     -- how to work it, under the book
     love.graphics.setFont(F.hint)
-    local hint = "Left / Right: turn the page     Up / Down: choose     Enter: select     B or Esc: close"
+    local hint = controls:fill("Left / Right: turn the page     Up / Down: choose     Enter: select     {book} or Esc: close")
     local hy = oy + 269 * bs
     love.graphics.setColor(0, 0, 0, 0.6 * progress)
     love.graphics.printf(hint, 2, hy + 2, w, "center")

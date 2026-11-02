@@ -225,7 +225,7 @@ function saveState:saveNow(onChainDone)
     end
 
     if onchain:available() and onchain.remote.saves == "1" then
-        showToast("Saved on this device. Connect a wallet (Menu) to save on-chain.", 4)
+        showToast("Saved on this device. Connect a wallet in Settings (Esc) to save on-chain.", 4)
     else
         showToast("Game saved", 2)
     end

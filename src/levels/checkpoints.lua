@@ -149,7 +149,7 @@ function checkpoints:drawOverlay()
     if isPlayerFrozen() or pause.active then return end
     for _, cp in ipairs(checkpoints) do
         if distanceBetween(cp.x, cp.y - 6, player:getX(), player:getY()) < TOUCH_RADIUS + 10 then
-            local text = "Checkpoint  -  [E] Save" .. (onchain:canSave() and " on-chain" or "")
+            local text = "Checkpoint  -  [" .. controls:label("interact") .. "] Save" .. (onchain:canSave() and " on-chain" or "")
             if saveState.chainSaving then text = "Saving on-chain..." end
             local sx, sy = cam:cameraCoords(cp.x, cp.y - 32)
             love.graphics.setFont(fonts.small)

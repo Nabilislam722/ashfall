@@ -92,7 +92,7 @@ quests.LIST = {
             { text = "Ask Mira at the Adventurers' Guild (south-east Willowbrook) for an Adventure Book", place = "village",
               done = function() return story().bookGiven end },
         },
-        xp = 20, reward = "The Adventure Book (B)",
+        xp = 20, reward = "The Adventure Book ({book})", -- ({key}: the player's key, src/ui/book.lua)
     },
     {
         id = "shadowStep", kind = "side", title = "The Shadow Step",
@@ -103,7 +103,7 @@ quests.LIST = {
             { text = "Find Master Juan by the south-west pond and learn the Shadow Step", place = "village",
               done = function() return data.skills.shadowStep end },
         },
-        xp = 50, reward = "The Shadow Step (Space)",
+        xp = 50, reward = "The Shadow Step ({shadowStep})",
     },
     {
         id = "general", kind = "side", title = "The Demon General",
@@ -255,7 +255,7 @@ function quests:update(dt)
         progression:gain(xp, player:getX(), player:getY() - 8)
     elseif #seen > 0 then
         local title = #seen == 1 and ("New quest: " .. seen[1].title) or (#seen .. " new quests")
-        showToast(title .. (data.story.bookGiven and "   (B: Adventure Book)" or ""), 3.5)
+        showToast(title .. (data.story.bookGiven and controls:fill("   ({book}: Adventure Book)") or ""), 3.5)
     end
     if #seen > 0 then self.unread = true end
 end

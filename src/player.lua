@@ -101,10 +101,10 @@ local STEP_BACK_SPEED, STEP_BACK_TIME = 160, 0.1 -- a cut that lands: the hero s
 -- the way the movement keys point: -1, 0 or 1 on each axis
 function player:moveInput()
     local dirX, dirY = 0, 0
-    if love.keyboard.isDown("d") or love.keyboard.isDown("right") then dirX = 1 end
-    if love.keyboard.isDown("a") or love.keyboard.isDown("left") then dirX = -1 end
-    if love.keyboard.isDown("s") or love.keyboard.isDown("down") then dirY = 1 end
-    if love.keyboard.isDown("w") or love.keyboard.isDown("up") then dirY = -1 end
+    if controls:down("right") then dirX = 1 end
+    if controls:down("left") then dirX = -1 end
+    if controls:down("down") then dirY = 1 end
+    if controls:down("up") then dirY = -1 end
     return dirX, dirY
 end
 
@@ -121,8 +121,9 @@ function player:useStamina(cost)
 end
 
 function isPlayerFrozen()
-    return dialogue.active or shop.active or hemiExchange.active or manaWell.active or topMenu.open
+    return dialogue.active or shop.active or hemiExchange.active or manaWell.active
         or cutscene.active or respawn.pending or (book ~= nil and book.active)
+        or (settingsMenu ~= nil and settingsMenu.active)
 end
 
 function player:update(dt)
@@ -207,22 +208,22 @@ function player:update(dt)
 
         if pause.active then return end
 
-        if love.keyboard.isDown("d") or love.keyboard.isDown("right") then
+        if controls:down("right") then
             dirX = 1
             player.dirX = 1
         end
 
-        if love.keyboard.isDown("a") or love.keyboard.isDown("left") then
+        if controls:down("left") then
             dirX = -1
             player.dirX = -1
         end
 
-        if love.keyboard.isDown("s") or love.keyboard.isDown("down") then
+        if controls:down("down") then
             dirY = 1
             player.dirY = 1
         end
 
-        if love.keyboard.isDown("w") or love.keyboard.isDown("up") then
+        if controls:down("up") then
             dirY = -1
             player.dirY = -1
         end
@@ -907,19 +908,19 @@ function player:roll()
     local dirX = 0
     local dirY = 0
 
-    if love.keyboard.isDown("d") or love.keyboard.isDown("right") then
+    if controls:down("right") then
         dirX = 1
     end
 
-    if love.keyboard.isDown("a") or love.keyboard.isDown("left") then
+    if controls:down("left") then
         dirX = -1
     end
 
-    if love.keyboard.isDown("s") or love.keyboard.isDown("down") then
+    if controls:down("down") then
         dirY = 1
     end
 
-    if love.keyboard.isDown("w") or love.keyboard.isDown("up") then
+    if controls:down("up") then
         dirY = -1
     end
 
@@ -982,10 +983,10 @@ function player:dodge()
     if not player:useStamina(DODGE_STAMINA) then return end
 
     local dirX, dirY = 0, 0
-    if love.keyboard.isDown("d") or love.keyboard.isDown("right") then dirX = 1 end
-    if love.keyboard.isDown("a") or love.keyboard.isDown("left") then dirX = -1 end
-    if love.keyboard.isDown("s") or love.keyboard.isDown("down") then dirY = 1 end
-    if love.keyboard.isDown("w") or love.keyboard.isDown("up") then dirY = -1 end
+    if controls:down("right") then dirX = 1 end
+    if controls:down("left") then dirX = -1 end
+    if controls:down("down") then dirY = 1 end
+    if controls:down("up") then dirY = -1 end
     local dir
     if dirX == 0 and dirY == 0 then
         dir = toMouseVector(player:getX(), player:getY()):rotated(math.pi)
@@ -1031,10 +1032,10 @@ function player:shadowStep()
     if player.shadowCooldown > 0 then return end
 
     local dirX, dirY = 0, 0
-    if love.keyboard.isDown("d") or love.keyboard.isDown("right") then dirX = 1 end
-    if love.keyboard.isDown("a") or love.keyboard.isDown("left") then dirX = -1 end
-    if love.keyboard.isDown("s") or love.keyboard.isDown("down") then dirY = 1 end
-    if love.keyboard.isDown("w") or love.keyboard.isDown("up") then dirY = -1 end
+    if controls:down("right") then dirX = 1 end
+    if controls:down("left") then dirX = -1 end
+    if controls:down("down") then dirY = 1 end
+    if controls:down("up") then dirY = -1 end
     local dir
     if dirX == 0 and dirY == 0 then
         dir = toMouseVector(player:getX(), player:getY())

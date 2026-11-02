@@ -704,17 +704,6 @@
       return encodeState();
     },
 
-    // for the page menu (web/menu.js)
-    getState: function () {
-      set({ wallet: wallet() ? "1" : "0" });
-      return Object.assign({}, state);
-    },
-
-    toggleMenu: function () {
-      if (global.ashfallMenu) global.ashfallMenu.toggle();
-      return "ok";
-    },
-
     // exposed for tests
     _encodeClaim: encodeClaim,
     _encodeSave: encodeSave,

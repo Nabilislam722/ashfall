@@ -14,14 +14,19 @@ function webBridge.isAvailable()
     return love.system.getOS() == "Web"
 end
 
--- true when the page has its own ☰ menu (web/menu.js). An older or custom
--- index.html may not, and then the game draws its own button. Checked once.
-function webBridge.hasPageMenu()
-    if not webBridge.isAvailable() then return false end
-    if webBridge.pageMenu == nil then
-        webBridge.pageMenu = webBridge.eval("window.ashfallMenu ? '1' : '0'") == "1"
-    end
-    return webBridge.pageMenu
+-- the page's fullscreen (web/fullscreen.js): "on" or "off", or nil where the browser
+-- can't (an iPhone) or the page has no fullscreen
+function webBridge.fullscreen()
+    if not webBridge.isAvailable() then return nil end
+    local state = webBridge.eval("window.ashfallFullscreen ? window.ashfallFullscreen.state() : ''")
+    if state == "1" then return "on" elseif state == "0" then return "off" end
+    return nil
+end
+
+-- (needs a fresh click or key press: browsers only go fullscreen for the player)
+function webBridge.toggleFullscreen()
+    if not webBridge.isAvailable() then return end
+    webBridge.eval("window.ashfallFullscreen ? window.ashfallFullscreen.toggle() : ''")
 end
 
 -- runs a JavaScript expression in the page and returns its value as a string

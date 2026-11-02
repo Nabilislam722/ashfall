@@ -360,7 +360,7 @@ function villageStory:playIntro()
     end, function()
         data.story.villageIntro = true
         objective = OBJECTIVE
-        showToast("Press E near villagers to talk and trade", 4)
+        showToast(controls:fill("Press {interact} near villagers to talk and trade"), 4)
     end)
 end
 
@@ -429,13 +429,13 @@ function villageStory:teachShadowStep(juan)
         opener,
         line("Master Juan", "Close your eyes. Feel the shadow under your feet... and step into it."),
         line("Master Juan", "The Shadow Step carries you a short way in an instant. Claws, crumbs and shockwaves pass right through you."),
-        line("Master Juan", "Walls will still stop you, and it needs a breath to recharge. Press Space, and go."),
+        line("Master Juan", "Walls will still stop you, and it needs a breath to recharge. Press " .. controls:label("shadowStep") .. ", and go."),
     }, function()
         data.skills.shadowStep = true
         player.shadowCooldown = 0
         player:gotItem(sprites.items.shadowStep)
         dj.play(sounds.items.chest, "static", "effect")
-        showToast("Learned Shadow Step!  Press Space to dash through danger", 4.5)
+        showToast(controls:fill("Learned Shadow Step!  Press {shadowStep} to dash through danger"), 4.5)
         objective = currentObjective()
     end)
 end
@@ -871,7 +871,7 @@ function villageStory:giveBook(mira)
     local lines = {
         line("Mira", "A new face! Welcome to the Adventurers' Guild of Willowbrook. I'm Mira."),
         line("Mira", "Every guild member carries one of these: an Adventure Book. Your quests, the places you've been, how strong you've grown... it keeps it all."),
-        line("Mira", "Open it with B. And bring me monster ears and gems - the guild pays for them."),
+        line("Mira", controls:fill("Open it with {book}. And bring me monster ears and gems - the guild pays for them.")),
     }
     if not data.story.rickDefeated then
         table.insert(lines, line("Mira", "Not that anyone's taking jobs while that glutton runs riot in the plaza. Deal with him first!"))
@@ -880,7 +880,7 @@ function villageStory:giveBook(mira)
         data.story.bookGiven = true
         player:gotItem(sprites.items.adventureBook)
         dj.play(sounds.items.chest, "static", "effect")
-        showToast("Got the Adventure Book!  Press B to open it", 4.5)
+        showToast(controls:fill("Got the Adventure Book!  Press {book} to open it"), 4.5)
     end)
 end
 

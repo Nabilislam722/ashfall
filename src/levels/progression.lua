@@ -69,7 +69,7 @@ function progression:leveledUp(level)
     floatTexts:spawn(player:getX(), player:getY() - 22, "LEVEL UP!", { 1, 0.86, 0.4 }, { big = true, life = 1.4 })
     dj.play("sounds/items/manaFull.wav", "static", "effect", 0.8, 1.25)
     if data.story.bookGiven then
-        showToast("Level " .. level .. "!  A point to spend in your Adventure Book (B)", 4)
+        showToast(controls:fill("Level " .. level .. "!  A point to spend in your Adventure Book ({book})"), 4)
     else
         showToast("Level " .. level .. "!  Spend its point in an Adventure Book, from the Adventurers' Guild", 4)
     end

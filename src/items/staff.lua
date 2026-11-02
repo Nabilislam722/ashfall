@@ -11,7 +11,7 @@
 -- still know it as data.skills.laserStaff.)
 --
 -- staff.mana is the player's mana pool, shared by the staff and spells (the
--- fireball (E for now), the flame (R)). It refills slowly on its own (REGEN per
+-- fireball (E for now), the flame). It refills slowly on its own (REGEN per
 -- second, starting a moment after mana was last used) and much faster while
 -- the staff is held to draw mana from the land. Releasing the staff spends
 -- everything in the pool.

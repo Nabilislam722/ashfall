@@ -113,7 +113,7 @@ local function drawShadowSocket(px, py)
         love.graphics.arc("line", "open", cx, cy, PANEL.socket.r * s, -math.pi / 2, -math.pi / 2 + progress * math.pi * 2)
         love.graphics.setLineWidth(1)
     end
-    panelLabel("Space", px + 53 * s, py + 32 * s, { 0.8, 0.65, 1 })
+    panelLabel(controls:label("shadowStep"), px + 53 * s, py + 32 * s, { 0.8, 0.65, 1 })
 end
 
 -- health, stamina and mana, top left
@@ -258,7 +258,7 @@ function drawFireballKey(x, y, iconSize, hs)
     end
     love.graphics.setFont(fonts.hudGoal)
     love.graphics.setColor(0, 0, 0, 0.8)
-    local key = fireballs.KEY:upper()
+    local key = controls:label("fireball")
     love.graphics.print(key, x + iconSize * 0.62 + hs * 0.4, y + iconSize * 0.25 + hs * 0.4)
     love.graphics.setColor(1, 0.92, 0.75, 1)
     love.graphics.print(key, x + iconSize * 0.62, y + iconSize * 0.25)

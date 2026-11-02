@@ -8,10 +8,9 @@ function love.load()
     gameStart()
     createNewSave()
 
+    settings:load() -- the player's volume, keys and so on (src/utilities/settings.lua)
     loadMap("menu")
     menu:open()
- 
-    dj.volume("effect", 1)
 
 end
 
@@ -50,6 +49,11 @@ function love.keypressed(key, scancode, isrepeat)
         intro:skip()
         return
     end
+    -- Settings open: it has the keys (src/ui/settingsMenu.lua)
+    if settingsMenu.active then
+        settingsMenu:keypressed(key)
+        return
+    end
     -- the Adventure Book open: it has the keys (src/ui/book.lua)
     if book.active then
         book:keypressed(key)
@@ -60,126 +64,106 @@ function love.keypressed(key, scancode, isrepeat)
         return
     end
 
-    -- title screen: Continue / New Game
-    if gamestate == 0 and (menu.confirming or (key ~= 'escape' and key ~= 'backspace')) then
+    -- F11 (or Backspace): fullscreen on and off on desktop (in the browser, Settings and the title screen do it)
+    if (key == 'f11' or (key == 'backspace' and not menu:modal())) and love.system.getOS() ~= "Web" then
+        toggleFullscreen()
+        return
+    end
+
+    -- title screen: Continue / New Game / Settings (Esc quits, on desktop)
+    if gamestate == 0 then
+        if key == 'escape' and not menu:modal() then
+            if love.system.getOS() ~= "Web" then love.event.quit() end
+            return
+        end
         menu:keypressed(key)
         return
     end
 
+    if gamestate ~= 1 then return end
     -- conversations, trading and cutscenes take the keyboard first
-    if gamestate == 1 then
-        if dialogue.active then
-            dialogue:keypressed(key)
-            return
-        end
-        if shop.active then
-            shop:keypressed(key)
-            return
-        end
-        if hemiExchange.active then
-            hemiExchange:keypressed(key)
-            return
-        end
-        if manaWell.active then
-            manaWell:keypressed(key)
-            return
-        end
-        if topMenu.open then
-            topMenu:keypressed(key)
-            return
-        end
-        if vsBanner.active then
-            vsBanner:skip()
-            return
-        end
-        if cutscene.active or respawn.pending then
-            return
-        end
-        if key == 'm' and topMenu:canToggle() then
-            topMenu:toggle()
-            return
-        end
-        if key == 'n' then
-            minimap.visible = not minimap.visible
-            return
-        end
-        -- B: the Adventure Book (J: at its journal)
-        if (key == 'b' or key == 'j') and not pause.active and not isPlayerFrozen() and curtain.state == 0 then
-            book:open(key == 'j' and "journal" or nil)
-            return
-        end
-        -- Space (or Q): Shadow Step. Left Shift: roll. R: the flame
-        if key == 'space' or key == 'q' then
-            player:shadowStep()
-            return
-        end
-        if key == 'lshift' or key == 'rshift' then
-            player:roll()
-            return
-        end
-        if key == 'r' then
-            useItem('altL')
-            return
-        end
+    if dialogue.active then
+        dialogue:keypressed(key)
+        return
     end
-
-    if key == 'escape' then
-        if pause.active then
-            pause:toggle()
-        elseif love.system.getOS() ~= "Web" then
-            love.event.quit()
-        end
+    if shop.active then
+        shop:keypressed(key)
+        return
+    end
+    if hemiExchange.active then
+        hemiExchange:keypressed(key)
+        return
+    end
+    if manaWell.active then
+        manaWell:keypressed(key)
+        return
+    end
+    if vsBanner.active then
+        vsBanner:skip()
+        return
+    end
+    if cutscene.active or respawn.pending then
         return
     end
 
-    if key == 'backspace' and love.system.getOS() ~= "Web" then
-        if fullscreen then
-            local newWidth = 1920
-            local newHeight = 1080
-            local fractionW = love.graphics.getWidth()*0.9
-            local fractionH = love.graphics.getHeight()*0.9
-            if fractionW < newWidth then
-                newWidth = fractionW
-            end
-            if fractionH < newHeight then
-                newHeight = fractionH
-            end
-
-            setWindowSize(false, newWidth, newHeight)
-        else
-            setWindowSize(true)
-        end
-        reinitSize()
+    -- Esc closes the item menu, or opens Settings (as the Settings button does)
+    if key == 'escape' then
+        if pause.active then pause:toggle() elseif curtain.state == 0 then settingsMenu:open("game") end
+        return
     end
 
-    if key == 'return' or key == 'tab' or key == 'e' then
-        if gamestate == 1 then
-            -- E / Enter talks to a nearby villager or saves at a checkpoint;
-            -- Tab always opens the item menu
-            if key ~= 'tab' and not pause.active and (npcs:tryInteract() or checkpoints:tryInteract()) then
-                return
-            end
-            -- with no one to talk to, E is the fireball for now (tapped, a fireball; held,
-            -- it charges: src/spells/fireball.lua), and only closes the item menu
-            if key == fireballs.KEY and not pause.active then
-                fireballs:press()
-                return
-            end
+    -- the other actions, on the player's keys (src/utilities/controls.lua)
+    if controls:is("minimap", key) then
+        settings:toggleMinimap()
+        return
+    end
+    -- the Adventure Book (at its journal)
+    if (controls:is("book", key) or controls:is("journal", key)) and not pause.active and not isPlayerFrozen() and curtain.state == 0 then
+        book:open(controls:is("journal", key) and not controls:is("book", key) and "journal" or nil)
+        return
+    end
+    if controls:is("shadowStep", key) then
+        player:shadowStep()
+        return
+    end
+    if controls:is("roll", key) then
+        player:roll()
+        return
+    end
+    local interact, fire, items = controls:is("interact", key), controls:is("fireball", key), controls:is("items", key)
+    if interact or fire or items then
+        -- the item menu open: any of these closes it (and casts nothing)
+        if pause.active then
+            pause:toggle()
+            return
+        end
+        -- talk to a villager close by, or save at a checkpoint
+        if interact and (npcs:tryInteract() or checkpoints:tryInteract()) then
+            return
+        end
+        -- with no one to talk to, the fireball (tapped, a fireball; held, it
+        -- charges: src/spells/fireball.lua); else the item menu
+        if fire then
+            fireballs:press()
+        elseif items then
             pause:toggle()
         end
+        return
     end
-
-
-    if key == '+' or key == '=' then
+    if controls:is("zoomIn", key) then
         setZoomLevel(zoomLevel + 0.1)
-    elseif key == '-' then
+    elseif controls:is("zoomOut", key) then
         setZoomLevel(zoomLevel - 0.1)
-    elseif key == '0' then
-        setZoomLevel(1)
+    elseif controls:is("zoomReset", key) then
+        setZoomLevel(settings.values.zoom) -- (the zoom chosen in Settings)
     end
 end
 
 function love.wheelmoved(x, y)
+    if settingsMenu.active then
+        settingsMenu:wheelmoved(y)
+        return
+    end
     if gamestate ~= 1 or pause.active or book.active or y == 0 then return end
     setZoomLevel(zoomLevel + y * 0.1)
 end
@@ -195,9 +179,23 @@ end
 
 mouseHeld = {} -- the mouse buttons down right now
 
+-- Settings' and the title screen's buttons light up under the mouse
+function love.mousemoved(x, y)
+    if intro.active then return end
+    if settingsMenu.active then
+        settingsMenu:mousemoved(x, y)
+    elseif gamestate == 0 then
+        menu:mousemoved(x, y)
+    end
+end
+
 function love.mousepressed( x, y, button )
     if intro.active then
         intro:skip()
+        return
+    end
+    if settingsMenu.active then
+        settingsMenu:mousepressed(x, y, button)
         return
     end
     if book.active then
@@ -232,7 +230,7 @@ function love.mousepressed( x, y, button )
         if cutscene.active or respawn.pending then
             return
         end
-        if topMenu:mousepressed(x, y, button) then
+        if settingsButton:mousepressed(x, y, button) then
             return
         end
     end

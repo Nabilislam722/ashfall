@@ -1,4 +1,4 @@
--- Minimap in the top-right corner, under the ☰ button. Press N to hide it.
+-- Minimap in the top-right corner, under the Settings button. Its key (N) hides it.
 --
 -- The map picture is drawn once per map (tile layers scaled down, with solid
 -- things like houses, trees and fences darkened). Markers are drawn live:
@@ -7,7 +7,6 @@
 -- (Rick himself, the inn, or the Adventurers' Guild, highlighted). Under the map:
 -- its name, and the day and time of day.
 
-local webBridge = require("src/utilities/webBridge")
 
 minimap = {}
 minimap.visible = true
@@ -66,8 +65,7 @@ function minimap:rect()
     local s = math.min(62 * hs / cw, 40 * hs / ch)
     local w, h = cw * s, ch * s
     local x = love.graphics.getWidth() - w - 6
-    local y = 6 + 13 * hs + 3 * hs
-    if webBridge.hasPageMenu() then y = 6 end -- no in-game menu button above it
+    local y = 6 + 13 * hs + 3 * hs -- (under the Settings button)
     return x, y, w, h, s
 end
 

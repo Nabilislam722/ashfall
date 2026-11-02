@@ -1,6 +1,9 @@
 particles = {}
 
 function spawnParticle(type, x, y, args)
+    -- (Settings: fewer particles, or none)
+    local amount = settings and settings.values.particles or 1
+    if amount < 1 and math.random() >= amount then return end
 
     local particle = {}
     particle.type = type

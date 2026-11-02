@@ -75,6 +75,22 @@ function setWindowSize(full, width, height)
     end
 end
 
+-- fullscreen on and off: the window on desktop (F11 / Backspace), the page in
+-- the browser (web/fullscreen.js); the title screen and Settings have it too
+function toggleFullscreen()
+    if love.system.getOS() == "Web" then
+        require("src/utilities/webBridge").toggleFullscreen()
+        return
+    end
+    if fullscreen then
+        setWindowSize(false, math.min(1920, love.graphics.getWidth() * 0.9), math.min(1080, love.graphics.getHeight() * 0.9))
+    else
+        setWindowSize(true)
+    end
+    reinitSize()
+    if settings then settings:fullscreenChanged() end
+end
+
 function initGlobals()
     data = {} -- save data, will be loaded after game begins
 

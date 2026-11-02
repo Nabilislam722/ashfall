@@ -3,7 +3,7 @@ enemies = {}
 -- Elements. A monster can be made of one (enemy.element: the slimes are water,
 -- lightning and fire): an attack of its own element does it no harm at all, and
 -- an attack of the opposite element does double. The hero's attacks: the
--- Fireball and R's flame are fire, the Storm Staff's bolt is lightning;
+-- Fireball and the flame are fire, the Storm Staff's bolt is lightning;
 -- the sword, arrows and bombs have no element.
 ELEMENT_OPPOSITE = { fire = "water", water = "fire", lightning = "earth", earth = "lightning" }
 ELEMENT_WEAKNESS = 2

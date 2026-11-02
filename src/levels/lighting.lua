@@ -51,9 +51,10 @@ function loadLighting(map)
     end
 end
 
--- how dark it is right now: the map's own darkness, or night outdoors
+-- how dark it is right now: the map's own darkness, or night outdoors (softer
+-- if the player has asked for it in Settings)
 function lighting:level()
-    return math.max(self.ambient, worldClock:darkness())
+    return math.max(self.ambient, worldClock:darkness()) * (settings and settings.values.darkness or 1)
 end
 
 function lighting:active()

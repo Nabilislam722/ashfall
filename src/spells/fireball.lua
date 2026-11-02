@@ -10,7 +10,6 @@
 -- charge stops growing; rolled out of, or knocked down by a boss, it fizzles.
 
 fireballs = {}
-fireballs.KEY = "e"            -- the key that casts it (main.lua: E talks to anyone close by first)
 fireballs.COST = 20
 fireballs.COOLDOWN = 0.35
 fireballs.CHARGE_DELAY = 0.15  -- held longer than this, it starts to charge (a tap is a plain fireball)
@@ -221,7 +220,7 @@ function fireballs:updateCharge(dt)
     end
     c.dir = toMouseVector(player:getX(), player:getY() - 2)
     -- let go: it flies
-    if not love.keyboard.isDown(self.KEY) then
+    if not controls:down("fireball") then -- (its key: src/utilities/controls.lua; main.lua talks to anyone close by first)
         self.charge = nil
         stopHum()
         launch(c)

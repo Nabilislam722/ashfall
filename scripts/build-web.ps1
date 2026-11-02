@@ -35,7 +35,7 @@ try {
     Write-Host "Created $GamePackage"
 
     # New b= numbers on the page's script and style links, so browsers load the
-    # new index.html, style.css, bridge.js, menu.js and player.js after a deploy
+    # new index.html, style.css, bridge.js, fullscreen.js and player.js after a deploy
     $IndexHtml = Join-Path $WebRoot "index.html"
     $BuildId = Get-Date -Format "yyyyMMddHHmm"
     $IndexSource = [System.IO.File]::ReadAllText($IndexHtml)

@@ -1,5 +1,6 @@
 function updateAll(dt)
     onchain:update(dt)
+    menu:update(dt) -- (the title screen's backdrop and embers)
 
     --if pause.active == false then
         updateGame(dt)
@@ -14,6 +15,11 @@ end
 
 function updateGame(dt)
     miscUpdate(dt)
+    -- Settings open: the world waits (src/ui/settingsMenu.lua)
+    if settingsMenu.active then
+        settingsMenu:update(dt)
+        return
+    end
     -- the Adventure Book open: the world waits (src/ui/book.lua)
     if book.active then
         book:update(dt)

@@ -150,7 +150,7 @@ function drawAfterCamera()
             roamingBoss:drawHUD()
             drawToastAndObjective()
             minimap:draw()
-            topMenu:draw()
+            settingsButton:draw()
         end
         vsBanner:draw()
         domainFx:draw()
@@ -169,5 +169,20 @@ function drawAfterCamera()
         devTools:drawScreen()
     end
 
+    settingsMenu:draw() -- (over the title screen, or the game)
     curtain:draw()
+    if settings.values.fps then drawFps() end
+end
+
+-- the frame rate in the bottom-left corner (Settings: Show FPS)
+function drawFps()
+    local f = fonts.menuSmall
+    local text = love.timer.getFPS() .. " FPS"
+    local x, y = math.floor(4 * scale), love.graphics.getHeight() - f:getHeight() - math.floor(3 * scale)
+    love.graphics.setFont(f)
+    love.graphics.setColor(0, 0, 0, 0.65)
+    love.graphics.print(text, x + 2, y + 2)
+    love.graphics.setColor(0.85, 1, 0.7, 1)
+    love.graphics.print(text, x, y)
+    setWhite()
 end
